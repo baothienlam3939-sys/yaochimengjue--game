@@ -1989,10 +1989,11 @@ button:hover {
         </div>
     </div>
 </div>
-     <div class="palace-card-fairy" style="margin-bottom: 20px;">
-    <div class="fairy-title">🏮 繁华市井 (天下奇珍)</div>
+ <div class="palace-card-fairy" style="margin-bottom: 20px; height: auto !important; max-height: none !important; overflow: visible !important;">
+    <div class="fairy-title">🏮 繁华市井</div>
     
-    <div class="fairy-grid">
+    <div class="fairy-grid" style="height: auto !important; max-height: none !important; overflow: visible !important; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
+        
         <div class="fairy-item" onclick="game.handleMarketEncounter('market')">
             <div class="fairy-icon" style="background:#eef5ff; color:#3498db;"><i class="fas fa-store"></i></div>
             <div class="fairy-info">
@@ -2024,8 +2025,16 @@ button:hover {
                 <div class="fairy-loot">🌸 寻觅机缘，缓解修行枯燥</div>
             </div>
         </div>
+
+        <div class="fairy-item" onclick="game.handleMarketEncounter('hospital')">
+            <div class="fairy-icon" style="background:#e8f8f5; color:#2ecc71;"><i class="fas fa-heartbeat"></i></div>
+            <div class="fairy-info">
+                <div class="fairy-name" style="color:#2ecc71;">回春堂 (医馆)</div>
+                <div class="fairy-loot">🏥 悬壶济世，调理气血与法力源泉</div>
+            </div>
+        </div>
+        
     </div>
-</div>
 </div>
           
 
@@ -2678,41 +2687,51 @@ manuals: {
     "mountain_hammer": { isArtifact: true, artifactName: "震岳裂地锤", type: "金", speed: 99, maxExp: 100, skill: { name: "震岳裂地无双击", d: 920, mp: 220 }, desc: "重砸【震岳裂地锤】引动的山崩地裂之力，粉碎万物。" },
     "dao_ruler": { isArtifact: true, artifactName: "五行量天尺", type: "special", speed: 99, maxExp: 100, skill: { name: "五行量天大湮灭", d: 2500, mp: 500 }, desc: "祭起【五行量天尺】打出的先天混元湮灭神光，无视因果。" }
 },
-  // 【新增】师尊数据配置
-// 【重铸挂载】将配置安全地作为同级属性进行封装，确保性能与可读性
+ // 【新增】师尊数据配置
+    // 【重铸挂载】将配置安全地作为同级属性进行封装，确保性能与可读性
+    // 🎯 核心重构：增加师父硬性具体属性指标要求（reqAttr: 属性键, reqValue: 指标值, reqName: 属性中文名）
     masters: [
         { id: 1, name: "玄微子", title: "丹鼎长老", gender: "male", personality: "孤僻冷傲", desc: "痴迷炼丹，性格古怪。对草药品质有着近乎病态的执着。", favItem: "聚灵花", 
+          reqAttr: "wisdom", reqValue: 10, reqName: "智慧",
           mastery: { alchemy: "登峰造极", cultivation: "略有涉猎", pet: "门外汉", herb: "炉火纯青" },
           dialogue: ["火候差了一分，废丹一炉！", "大道三千，唯丹道永恒！"] },
         { id: 2, name: "凌霄剑尊", title: "传功长老", gender: "male", personality: "刚烈如火", desc: "剑气凌厉，杀伐果断。只欣赏体魄强健之辈。", favItem: "筑基丹",
+          reqAttr: "physique", reqValue: 25, reqName: "体魄",
           mastery: { alchemy: "一窍不通", cultivation: "出神入化", pet: "粗通皮毛", herb: "略知一二" },
           dialogue: ["剑在手，问天下谁是英雄！", "再挥剑一万次！"] },
         { id: 3, name: "素问仙姑", title: "符阵长老", gender: "female", personality: "清冷淡泊", desc: "精通奇门遁甲，气质清冷。看重悟性与机缘。", favItem: "灵石",
+          reqAttr: "wisdom", reqValue: 35, reqName: "智慧",
           mastery: { alchemy: "略知一二", cultivation: "炉火纯青", pet: "略知一二", herb: "登峰造极" },
           dialogue: ["天地为盘，众生为子。", "机缘未到，不可强求。"] },
         { id: 4, name: "百兽真君", title: "御兽长老", gender: "male", personality: "豪放不羁", desc: "与灵兽同吃同住，性格狂野，不拘小节。", favItem: "兽灵果",
+          reqAttr: "spirit", reqValue: 40, reqName: "神识",
           mastery: { alchemy: "粗通皮毛", cultivation: "炉火纯青", pet: "超凡入圣", herb: "略有涉猎" },
           dialogue: ["这些小家伙比人可靠多了！", "感受它们的呼吸。"] },
         { id: 5, name: "神农裔", title: "灵植长老", gender: "female", personality: "温婉和蔼", desc: "常年行走于药圃，待弟子如春风般温暖。", favItem: "万年灵乳",
-          mastery: { alchemy: "炉火纯青", cultivation: "略有涉猎", pet: "略知一二", herb: "出神入化" },
+          reqAttr: "wisdom", reqValue: 45, reqName: "智慧",
+          mastery: { alchemy: "炉火纯青", cultivation: "略有涉猎", pet: "略知一二", herb: "出神化" },
           dialogue: ["万物皆有灵，善待每一株草木。", "这株灵草开花了。"] },
         { id: 6, name: "酒剑仙", title: "逍遥长老", gender: "male", personality: "嗜酒如命", desc: "御剑乘风来，除魔天地间。终日提着酒壶。", favItem: "猴儿酒",
+          reqAttr: "physique", reqValue: 55, reqName: "体魄",
           mastery: { alchemy: "略知一二", cultivation: "登峰造极", pet: "门外汉", herb: "粗通皮毛" },
           dialogue: ["好酒！再来一壶！", "御剑之术，存乎一心。"] },
         { id: 7, name: "红莲魔女", title: "执法长老", gender: "female", personality: "喜怒无常", desc: "火辣且致命，没人敢在她的地盘撒野。", favItem: "赤焰砂",
+          reqAttr: "charm", reqValue: 60, reqName: "魅力",
           mastery: { alchemy: "登峰造极", cultivation: "炉火纯青", pet: "一窍不通", herb: "略有涉猎" },
           dialogue: ["敢盯着我看？想死吗？", "这红莲业火，滋味如何？"] },
         { id: 8, name: "青牛道翁", title: "藏经阁长老", gender: "male", personality: "老成持重", desc: "骑着老青牛的白发老者，博览群书，大智若愚。", favItem: "古籍残卷",
+          reqAttr: "luck", reqValue: 65, reqName: "气运",
           mastery: { alchemy: "炉火纯青", cultivation: "炉火纯青", pet: "炉火转青", herb: "炉火纯青" },
           dialogue: ["年轻人，不要太浮躁。", "书中自有黄金屋。"] },
         { id: 9, name: "云霄楼主", title: "外务长老", gender: "female", personality: "精明强干", desc: "掌控宗门所有商业往来，心思缜密，极其严厉。", favItem: "金元宝",
+          reqAttr: "background", reqValue: 70, reqName: "家世",
           mastery: { alchemy: "略有涉猎", cultivation: "炉火纯青", pet: "略知一二", herb: "略知一二" },
           dialogue: ["灵石才是硬道理。", "这笔账，算错了。"] },
         { id: 10, name: "扫地僧", title: "无名老僧", gender: "male", personality: "深不可测", desc: "在后山扫地五十年的老人，几乎没人注意过他。", favItem: "旧木帚",
+          reqAttr: "spirit", reqValue: 99, reqName: "神识",
           mastery: { alchemy: "超凡入圣", cultivation: "超凡入圣", pet: "超凡入圣", herb: "超凡入圣" },
           dialogue: ["不过是过眼云烟。", "善哉，善哉。"] }
     ],
-  
     // 【新增】师门任务库
     masterTasks: [
         { id: "mt1", desc: "上缴灵石助师尊布置阵法", cost: { coin: 500 }, reward: { aff: 10, exp: 200 } },
@@ -5586,9 +5605,22 @@ spawnEntities: function() {
 },
 drawPlayer: function(ctx) {
     const p = this.player;
-    if(!this._cachedAvatar) {
+    
+    // 1. 缓存初始化，并建立防灾异常探针监控
+    if (!this._cachedAvatar) {
         this._cachedAvatar = new Image();
-        this._cachedAvatar.src = gameState.player.avatar || (gameState.player.gender==='女'?'https://img.shijia-game.top/female_1.jpg':'https://img2.shijia-game.top/male_1.jpg');
+        // 允许跨域（防止由于跨域导致的图片破损状态）
+        this._cachedAvatar.crossOrigin = "anonymous"; 
+        
+        // 动态绑定加载失败的探针
+        this._cachedAvatar.onerror = function() {
+            console.warn("⚠️ [天道法相探针] 玩家头像加载失败或地址失效，已进入防崩仙道降级阵法。");
+            this.isBroken = true; // 标记破损状态
+        };
+        
+        this._cachedAvatar.src = gameState.player.avatar || 
+            ((gameState.player.gender === '女' || gameState.player.gender === 'female') ? 
+            'https://img.shijia-game.top/female_1.jpg' : 'https://img2.shijia-game.top/male_1.jpg');
     }
 
     ctx.save();
@@ -5614,11 +5646,29 @@ drawPlayer: function(ctx) {
     ctx.arc(centerX, centerY, 18, 0, Math.PI * 2); 
     ctx.clip(); 
 
-    // --- 关键：精准绘制 ---
-    ctx.drawImage(this._cachedAvatar, Math.floor(p.px + 4), Math.floor(p.py + 4), 36, 36);
+    // --- 🎯【核心修复：精准防灾安全绘制】---
+    // 只有当图片成功加载完毕，且没有触发 broken 异常标记时，才允许 drawImage
+    if (this._cachedAvatar.complete && !this._cachedAvatar.isBroken && this._cachedAvatar.naturalWidth > 0) {
+        ctx.drawImage(this._cachedAvatar, Math.floor(p.px + 4), Math.floor(p.py + 4), 36, 36);
+    } else {
+        // 【降级机制】如果图片处于 broken 状态，绘制一个美观的“道”字渐变头像，确保 100% 不崩溃
+        const grad = ctx.createLinearGradient(p.px + 4, p.py + 4, p.px + 40, p.py + 40);
+        grad.addColorStop(0, '#f39c12');
+        grad.addColorStop(1, '#d35400');
+        ctx.fillStyle = grad;
+        ctx.fillRect(Math.floor(p.px + 4), Math.floor(p.py + 4), 36, 36);
+        
+        // 写入一个代表玩家性别的精美修仙汉字
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 14px 'Noto Serif SC', 'SimSun'";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        const txt = gameState.player.name ? gameState.player.name.charAt(0) : "道";
+        ctx.fillText(txt, centerX, centerY);
+    }
     ctx.restore();
     
-    // 金色边框装饰
+    // 金色边框装饰 (100% 保留原有视觉表现)
     ctx.save();
     ctx.beginPath();
     ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
@@ -6604,7 +6654,7 @@ doBattleAction: function(type, data) {
                 ? FATE_CONFIG.calcBattleBuffs(p, b.monster) 
                 : { run: 0 };
                 
-            const runRate = 0.5 + (pSpirit / 500) + (fateBuff.run || 0); 
+            const runRate = 0.1 + (pSpirit / 500) + (fateBuff.run || 0); 
             
             console.log(`%c[逃脱探针] 基础概率:${(0.5+(pSpirit/500)).toFixed(2)} | 星宿修正:${fateBuff.run || 0}`, "color:#2ecc71;");
 
@@ -12213,7 +12263,7 @@ recalculateAppearanceBonus: function() {
         // 情况D: 已有师傅 -> 进入互动界面
         this.renderMasterInteraction();
     },
-// 2. 渲染选师界面 (头像动态化 & 双向资质选择优化 - 已修复属性读取死结)
+// 2. 渲染选师界面 (头像动态化 & 师尊硬性多维指标考核 - 性能优化版)
     renderMasterSelection: function() {
         // 安全拦截：防止全局 gameState 或 player 未加载完成
         if (typeof gameState === 'undefined' || !gameState.player) {
@@ -12222,17 +12272,17 @@ recalculateAppearanceBonus: function() {
         }
         
         const p = gameState.player;
-        // 动态适配：优先获取去window化的本地 pool，如果没有则兜底防崩
         const pool = (typeof avatarpool !== 'undefined') ? avatarpool : { female: [], male: [] }; 
         
-        // 🎯【核心修复】映射到您 gameState 中真实存在的 player.attributes 六维属性系统
-        // 如果 attributes 尚未初始化，则降级读取直属属性或大后期 stats.int，最后兜底 10
-        const playerWisdom = (p.attributes && p.attributes.wisdom !== undefined) ? p.attributes.wisdom : (p.wisdom || (p.stats && p.stats.int) || 10);
-        const playerPhysique = (p.attributes && p.attributes.physique !== undefined) ? p.attributes.physique : (p.physique || (p.stats && p.stats.str) || 10);
-        
-        // 🔮【高能探针】测骨大阵全数据扫描监视
+        // 提取全套玩家六维真实属性系统
+        const pWisdom = (p.attributes && p.attributes.wisdom !== undefined) ? p.attributes.wisdom : (p.wisdom || (p.stats && p.stats.int) || 10);
+        const pPhysique = (p.attributes && p.attributes.physique !== undefined) ? p.attributes.physique : (p.physique || (p.stats && p.stats.str) || 10);
+        const pSpirit = (p.attributes && p.attributes.spirit !== undefined) ? p.attributes.spirit : (p.spirit || 10);
+        const pCharm = (p.attributes && p.attributes.charm !== undefined) ? p.attributes.charm : (p.charm || 10);
+        const pLuck = (p.attributes && p.attributes.luck !== undefined) ? p.attributes.luck : (p.luck || 10);
+
         console.log(
-            `%c[择师大典探针] 🧭 测骨大阵运转中 -> 玩家真实属性读取成功 | 悟性(wisdom): ${playerWisdom} | 体质/根骨(physique): ${playerPhysique}`, 
+            `%c[择师大典探针] 🧭 天道多维测骨阵激活 -> 悟性:${pWisdom} | 体魄:${pPhysique} | 神识:${pSpirit} | 魅力:${pCharm} | 气运:${pLuck}`, 
             "color:#9b59b6; font-weight:bold; background:#fdfaf2; padding:3px 8px; border:1px solid #ebdcb9; border-radius:4px;"
         );
 
@@ -12241,33 +12291,51 @@ recalculateAppearanceBonus: function() {
                     </div>`;
         html += `<div style="display:flex; overflow-x:auto; gap:12px; padding:5px 5px 15px 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch;">`;
 
-        // 确保能拿到当前宿主对象下的 masters 配置（兼容放在 CONFIG 或 this 下的配置）
         const masterList = (typeof CONFIG !== 'undefined' && CONFIG.masters) ? CONFIG.masters : (this.masters || []);
 
         masterList.forEach((m, index) => {
-            // --- 核心动态头像处理 ---
+            // 头像动态池映射
             let finalAvatar = '';
             if (m.gender === 'female' && pool.female && pool.female.length > 0) {
                 finalAvatar = pool.female[index % pool.female.length];
             } else if (pool.male && pool.male.length > 0) {
                 finalAvatar = pool.male[index % pool.male.length];
             } else {
-                finalAvatar = 'https://img2.shijia-game.top/male_1.jpg'; // 保证100%有图兜底
+                finalAvatar = 'https://img2.shijia-game.top/male_1.jpg';
             }
 
-            // 检查是否已经出师过
             const isFinished = p.master && p.master.finishedList ? p.master.finishedList.includes(m.id) : false;
             
-            // --- 【核心修正】根据修正后的体质/悟性真实数据判定双向选择门槛 ---
-            // 基础门槛 = 师父ID * 12 
-            const reqRequirement = m.id * 12; 
-            const isQualified = (playerPhysique >= reqRequirement || playerWisdom >= reqRequirement);
+            // 🎯【核心重构】根据师尊ID与特长，定制极具跨度的硬性具体指标要求（越靠后难度越巨大）
+            let reqAttrKey = "physique"; 
+            let reqAttrName = "体魄";
+            let reqValue = m.id * 10; // 阶梯底薪难度：玄微子10点，酒剑仙60点，扫地僧100点
 
-            // 动态识别当前大对象的变量名格式（杜绝window.game前缀污染）
+            if (m.id === 1) { reqAttrKey = "wisdom"; reqAttrName = "智慧/悟性"; reqValue = 50; } // 丹鼎长老看重悟性
+            else if (m.id === 2) { reqAttrKey = "physique"; reqAttrName = "体魄"; reqValue = 70; }  // 传功剑尊纯修肉身
+            else if (m.id === 3) { reqAttrKey = "wisdom"; reqAttrName = "智慧/悟性"; reqValue = 85; } // 符阵需要高悟性
+            else if (m.id === 4) { reqAttrKey = "spirit"; reqAttrName = "神识"; reqValue = 95; }    // 御兽需要强大神识
+            else if (m.id === 5) { reqAttrKey = "charm"; reqAttrName = "魅力"; reqValue = 120; }     // 灵植待人如春风
+            else if (m.id === 6) { reqAttrKey = "physique"; reqAttrName = "体魄"; reqValue = 150; }  // 酒剑仙御剑强身
+            else if (m.id === 7) { reqAttrKey = "spirit"; reqAttrName = "神识"; reqValue = 200; }    // 执法长老业火炼神
+            else if (m.id === 8) { reqAttrKey = "wisdom"; reqAttrName = "智慧/悟性"; reqValue = 240; } // 藏经阁博览群书
+            else if (m.id === 9) { reqAttrKey = "luck"; reqAttrName = "气运"; reqValue = 280; }     // 商业往来财运亨通
+            else if (m.id === 10) { reqAttrKey = "wisdom"; reqAttrName = "全法悟性"; reqValue = 300; } // 扫地僧极致门槛
+
+            // 读取玩家对应的单项硬性指标数据
+            let playerCurrentValue = 10;
+            if (reqAttrKey === 'wisdom') playerCurrentValue = pWisdom;
+            else if (reqAttrKey === 'physique') playerCurrentValue = pPhysique;
+            else if (reqAttrKey === 'spirit') playerCurrentValue = pSpirit;
+            else if (reqAttrKey === 'charm') playerCurrentValue = pCharm;
+            else if (reqAttrKey === 'luck') playerCurrentValue = pLuck;
+
+            const isQualified = (playerCurrentValue >= reqValue);
+
+            // 自动侦测环境宿主，杜绝带window前缀
             let systemHost = "game";
             if (typeof game === 'undefined' && typeof SectSystem !== 'undefined') systemHost = "SectSystem";
 
-            // 按钮逻辑交互处理
             let btnState = "";
             let btnText = "拜入座下";
             
@@ -12275,16 +12343,14 @@ recalculateAppearanceBonus: function() {
                 btnState = "disabled style='background:#bdc3c7; border-color:#bdc3c7; cursor:not-allowed;'";
                 btnText = "功德圆满";
             } else if (!isQualified) {
-                // 资质不够时，弹回真实的拒绝对话提示
                 const rejectReply = m.dialogue && m.dialogue[0] ? m.dialogue[0] : "你与老夫无缘，退下吧！";
-                btnState = `onclick="Utils.toast('❌ 资质不足！${m.name}上下打量了你一眼冷哼道：${rejectReply}（需体质或悟性达 ${reqRequirement} 点）')"`;
+                btnState = `onclick="Utils.toast('❌ 仙缘未到！${m.name}冷哼道：${rejectReply}（考核硬性指标：${reqAttrName} 需达 ${reqValue} 点，你当前仅有 ${playerCurrentValue} 点）')"`;
             } else {
-                // 满足资质，安全回调
                 btnState = `onclick="${systemHost}.confirmMaster(${m.id})"`;
             }
 
-            // 动态展示该师尊的要求
-            const reqTips = m.id > 1 ? `<div style="font-size:9px; color:#e74c3c; margin-top:2px;">⚠️ 须体质/悟性 ≥ ${reqRequirement}</div>` : `<div style="font-size:9px; color:#2ecc71; margin-top:2px;">✅ 凡体皆可拜入</div>`;
+            // 动态展示该师尊真实的属性要求文案
+            const reqTips = m.id > 1 ? `<div style="font-size:9px; color:#e74c3c; margin-top:2px;">⚠️ 须 ${reqAttrName} ≥ ${reqValue}</div>` : `<div style="font-size:9px; color:#2ecc71; margin-top:2px;">✅ 凡体皆可拜入</div>`;
 
             html += `
             <div style="flex:0 0 150px; background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:12px; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.05); position:relative; overflow:hidden;">
@@ -12316,7 +12382,6 @@ recalculateAppearanceBonus: function() {
 
         html += `</div>`;
         
-        // 安全唤起弹窗
         if (typeof openModal === 'function') {
             openModal("🙏 择师大典", html);
         } else if (typeof this.openModal === 'function') {
@@ -12325,12 +12390,39 @@ recalculateAppearanceBonus: function() {
     },
 
     // 3. 确认拜师
+  // 3. 确认拜师 (注入仙途手札数据轨 & 50条上限环形控制)
     confirmMaster: function(id) {
+        if (!gameState.player.master) {
+            gameState.player.master = { id: 0, affection: 0, finishedList: [] };
+        }
         gameState.player.master.id = id;
         gameState.player.master.affection = 0;
+        
         const m = CONFIG.masters.find(x => x.id === id);
         Utils.toast(`恭喜！成功拜入 ${m.name} 门下！`, "success");
-        this.renderMasterInteraction();
+
+        // 3. 【核心重构】直接精准写入“仙途手札”数据轨，限制最近50条
+        if (!gameState.world) gameState.world = {};
+        if (!gameState.world.logs) gameState.world.logs = [];
+        
+        const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const logItem = `【${timestamp}】天机回转，道友成功通过考验，正式拜入《${m.title}·${m.name}》座下。`;
+        
+        // 压入日志队列最前段，并进行动态截断防存档爆仓
+        gameState.world.logs.unshift(logItem);
+        if (gameState.world.logs.length > 50) {
+            gameState.world.logs = gameState.world.logs.slice(0, 50);
+        }
+
+        console.log(
+            `%c⚡ [仙途手札探针] 数据轨成功写入拜师记录。当前缓冲区日志总数: ${gameState.world.logs.length}/50`, 
+            "color:#2ed573; font-weight:bold;"
+        );
+
+        // 维持原版互动渲染功能 100% 不受影响
+        if (typeof this.renderMasterInteraction === 'function') {
+            this.renderMasterInteraction();
+        }
     },
 renderMasterInteraction: function() {
     const p = gameState.player;
@@ -12917,7 +13009,7 @@ if (type === 'task') {
 
         // --- 领受师命 (限制每回合2次，可选不同科目) ---
         if (type === 'study') {
-            const studyLimit = 2999;
+            const studyLimit = 2;
             const currentCount = p.studyCount || 0;
             
             console.log(`[师徒系统探针] 打开研习菜单 | 当前已研习: ${currentCount}/${studyLimit}`);
@@ -13324,11 +13416,18 @@ executeMasterTask: function(mode, index) {
             }
         }
 
-        // --- 结算奖励 (保持100%互动) ---
+        // --- 结算奖励 (保持100%互动) - 修复 oldAff 未定义崩溃 ---
         task.completed = true;
+        
+        const oldAff = p.master.affection || 0; // 记录旧值
         p.master.affection += task.reward.aff;
         p.exp += task.reward.exp;
-        this.checkMasterAffectionReward(oldAff, newAff);
+        const newAff = p.master.affection;     // 记录新值
+        
+        if (typeof this.checkMasterAffectionReward === 'function') {
+            this.checkMasterAffectionReward(oldAff, newAff);
+        }
+        
         if (task.reward.manual) {
             const mData = CONFIG.manuals[task.reward.manual];
             if (!p.ownedMethods.some(m => m.name === task.reward.manual)) {
@@ -15362,8 +15461,92 @@ unlockGardenSlot: function(slotIdx) {
             Utils.toast("灵石不足 (需1000灵石)", "error");
         }
     },
-  // --- 【新设：市井遭遇机缘核心分配函数】 ---
-handleMarketEncounter: function(targetType) {
+  openHospital: function() {
+    const p = gameState.player;
+    if (!p) return;
+    if (!p.battle) p.battle = { hp: 100, maxHp: 100, mp: 50, maxMp: 50 };
+    
+    const b = p.battle;
+    // 动态定价机制：每缺少 1点气血需要 2 灵石，每缺少 1点蓝需要 3 灵石
+    const hpMissing = Math.max(0, b.maxHp - b.hp);
+    const mpMissing = Math.max(0, b.maxMp - b.mp);
+    const totalCost = Math.floor((hpMissing * 20) + (mpMissing * 30));
+
+    console.log(`%c[医馆探针] 打开回春堂面板。缺失HP:${hpMissing}, 缺失MP:${mpMissing}, 精准定价灵石:${totalCost}`, "color:#2ecc71;");
+
+    let statusDescription = `<span style="color:#2ecc71; font-weight:bold;">气血饱满，神完气足，无需调理。</span>`;
+    if(totalCost > 0) {
+        statusDescription = `<span style="color:#e74c3c; font-weight:bold;">经脉受损，气血亏空，圣手建议立刻温养！</span>`;
+    }
+
+    let hospitalHtml = `
+    <div style="padding: 15px; font-family: STKaiti; text-align: center;">
+        <div style="background: #e8f8f5; border: 1px solid #2ecc71; border-radius: 8px; padding: 12px; margin-bottom: 15px; text-align: left;">
+            <div style="font-size: 15px; font-weight: bold; color: #117a65; margin-bottom: 6px;">🏥 回春堂 (仙城医馆)</div>
+            <div style="font-size: 12px; color: #666; line-height: 1.5;">悬壶济世，神医堂前无夭折。凡医治调理者，依损耗法力气血之源精准收取灵石润金。</div>
+        </div>
+
+        <div style="background: #fbfcfc; border: 1px solid #eaeded; border-radius: 8px; padding: 10px; font-size: 13px; text-align: left; margin-bottom: 15px; line-height: 1.8;">
+            <div>当前气血：<span style="color:#c0392b; font-weight:bold;">${Math.floor(b.hp)} / ${b.maxHp}</span> (缺损: ${Math.floor(hpMissing)})</div>
+            <div>当前法力：<span style="color:#0984e3; font-weight:bold;">${Math.floor(b.mp)} / ${b.maxMp}</span> (缺损: ${Math.floor(mpMissing)})</div>
+            <div style="margin-top: 5px; border-top: 1px dashed #ddd; padding-top: 5px;">
+                诊断断语：${statusDescription}
+            </div>
+        </div>
+
+        <div style="font-size: 14px; margin-bottom: 20px; color:#333;">
+            本次全满调理所需润金：<strong style="color: #d35400; font-size: 16px;">${totalCost}</strong> 灵石
+            <br><span style="font-size:11px; color:#95a5a6;">(你当前拥有: ${p.coins} 灵石)</span>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button id="btn-hospital-heal" ${totalCost === 0 || p.coins < totalCost ? 'disabled' : ''} 
+                    style="flex: 1; padding: 10px; background: ${totalCost === 0 || p.coins < totalCost ? '#bdc3c7' : '#2ecc71'}; color: white; border: none; border-radius: 6px; cursor: ${totalCost === 0 || p.coins < totalCost ? 'not-allowed' : 'pointer'}; font-size: 13px; font-weight:bold;">
+                💚 敷药行针 (恢复全满)
+            </button>
+            <button onclick="if(typeof closeModal === 'function') closeModal();" 
+                    style="flex: 1; padding: 10px; background: #7f8c8d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                ❌ 暂不调理
+            </button>
+        </div>
+    </div>
+    `;
+
+    openModal("🏥 寻医问药", hospitalHtml);
+
+    // 动态挂载点击事件
+    setTimeout(() => {
+        const healBtn = document.getElementById('btn-hospital-heal');
+        if (healBtn && totalCost > 0 && p.coins >= totalCost) {
+            healBtn.onclick = () => {
+                p.coins -= totalCost;
+                b.hp = b.maxHp;
+                b.mp = b.maxMp;
+
+                // 3. 直接精准写入“仙途手札”数据轨，限制最近50条
+                if (!gameState.world) gameState.world = {};
+                if (!gameState.world.logs) gameState.world.logs = [];
+                
+                const healLog = `【坊市寻医】你前往市井回春堂，花费了 ${totalCost} 灵石接受圣手调理，经脉逆流平息，气血灵力重归巅峰。`;
+                gameState.world.logs.unshift(healLog);
+                if (gameState.world.logs.length > 50) {
+                    gameState.world.logs = gameState.world.logs.slice(0, 50);
+                }
+
+                if (typeof closeModal === 'function') closeModal();
+                if (typeof Utils !== 'undefined' && typeof Utils.toast === 'function') {
+                    Utils.toast("✨ 圣手妙手回春！气血、灵力已恢复至巅峰状态！", "success");
+                }
+                
+                // 实时触发界面刷新
+                if (typeof this.updateUI_Self === 'function') {
+                    this.updateUI_Self();
+                }
+            };
+        }
+    }, 50);
+},
+ handleMarketEncounter: function(targetType) {
     const dice = Math.random();
     
     // 原功能的回调执行映射（确保无 window. 且保持原有参数传参）
@@ -15379,12 +15562,14 @@ handleMarketEncounter: function(targetType) {
             if (typeof springPavilionSystem !== 'undefined') {
                 springPavilionSystem.renderPavilion();
             }
+        } else if (targetType === 'hospital') {
+            // 丝滑接入新设医馆系统
+            this.openHospital();
         }
     };
 
-    // 0.3 概率触发路人偶遇
+    // 0.3 概率触发路人偶偶
     if (dice < 0.3) {
-        // 利用现有的宗门NPC生成器，若不存在则使用兜底数据
         let npc = { name: "神秘修士", root: { name: "未知五行" }, avatar: "👤" };
         if (typeof this.generateSectNPC === 'function') {
             npc = this.generateSectNPC();
@@ -15421,7 +15606,6 @@ handleMarketEncounter: function(targetType) {
         
         openModal("✨ 市井偶遇仙缘", encounterHtml);
         
-        // 动态挂载点击继续赶路的逻辑，确保干净重载原功能
         setTimeout(() => {
             const btn = document.getElementById('btn-continue-walk');
             if(btn) {
@@ -15433,7 +15617,6 @@ handleMarketEncounter: function(targetType) {
         }, 50);
         
     } else {
-        // 70% 概率未触发，丝滑不留痕迹直接进入原本的各个子系统
         console.log(`%c[市井探针] 未触发机缘，直接放行前往目的地。`, "color: #7f8c8d;");
         proceedToOriginalSystem();
     }
@@ -22940,8 +23123,37 @@ updateUI_Self: function() {
     // --- 3. 属性面板与计算详情按钮 ---
     const statsGrid = document.getElementById('ui-stats-grid');
     if(statsGrid && p.attributes) {
-        const battle = p.battle || { hp: 100, maxHp: 100, mp: 50, maxMp: 50 };
+        if (!p.battle) p.battle = { hp: 100, maxHp: 100, mp: 50, maxMp: 50 };
+        const battle = p.battle;
         const bonus = p.appearanceBonus || {};
+
+        // ==================== 🚑【医馆阵法：濒死/脱力全自动天道死线拦截】====================
+        if (battle.hp <= 0 || battle.mp <= 0) {
+            console.log(`%c⚡ [天道医馆死线探针] 监测到玩家状态彻底力竭！(HP:${battle.hp}, MP:${battle.mp}) 触发强制回春归位阵。`, "color:#ef4444; font-weight:bold;");
+            
+            // 设定强制治疗扣款：当前玩家灵石的 30% 作为天价保命费（最低扣除500，不够则扣成0）
+            const minCost = 500;
+            const dynamicCost = Math.max(minCost, Math.floor(p.coins * 0.3));
+            p.coins = Math.max(0, p.coins - dynamicCost);
+            
+            // 瞬间恢复全满
+            battle.hp = battle.maxHp;
+            battle.mp = battle.maxMp;
+
+            // 3. 【核心重构】直接精准写入“仙途手札”数据轨，限制最近50条
+            if (!gameState.world) gameState.world = {};
+            if (!gameState.world.logs) gameState.world.logs = [];
+            
+            const logMsg = `【命悬一线】你在市井突发气血衰竭，被回春堂圣手抬入内阁。紧急催动续命阵法，耗费了灵石 ${dynamicCost} 枚，状态已回满。`;
+            gameState.world.logs.unshift(logMsg); // 往前插入最新消息
+            if (gameState.world.logs.length > 50) {
+                gameState.world.logs = gameState.world.logs.slice(0, 50); // 严格限制50条
+            }
+
+            if (typeof Utils !== 'undefined' && typeof Utils.toast === 'function') {
+                Utils.toast(`🚑 气血枯竭！回春堂圣手强制施针救治，消耗灵石 ×${dynamicCost}`, "error");
+            }
+        }
         
         let rootHtml = '';
         if (p.root) {
@@ -23064,7 +23276,7 @@ updateUI_Self: function() {
         });
 
         statsGrid.innerHTML = rootHtml + battleStatusHtml + statsHtml;
-    } // 🌟【完美闭合】成功修复了原先缺失的大括号
+    }
 
     // --- 4. 功法状态同步与微量属性成长 ---
     const uiBox = document.getElementById('ui-manual-info');
@@ -23739,7 +23951,7 @@ updateUI_Self: function() {
                         <span>报告</span>
                         <div id="child-report-dot" style="display:none; position:absolute; top:2px; right:14px; width:9px; height:9px; background-color:#ff4d4f; border-radius:50%; border:2px solid #fff; z-index:100;"></div>
                     </div>
-                    <div class="menu-item" onclick="if(typeof game!=='undefined'&&game.openFightMenu){game.openFightMenu()}else{openModal('🤺 好友切磋', '与好友比试切磋。')}"><div class="icon-box blue"><i class="fas fa-khanda"></i></div><span>切磋</span></div>
+                    <div class="menu-item" onclick="if(typeof game!=='undefined'&&game.openFightMenu){game.openFightMenu()}else{openModal('🥬 菜园', '敬请期待（我要做偷菜还没做完）')}"><div class="icon-box blue"><i class="fas fa-khanda"></i></div><span>切磋</span></div>
                 </div>
             </div>
             <div id="ui-home-nursery-panel"></div>
@@ -30168,11 +30380,11 @@ renderNpcBattleUI: function(isVersusMode = true) {
         const duration = (performance.now() - startTime).toFixed(3);
         console.log(`%c⚡ [演武大比反击推演探针] 对手: ${b.npc.name} | 真实境界索引: ${npcRealmIdx} | 最终输出伤害: ${npcDmg} | 耗时: ${duration}ms`, "color:#9b59b6; font-weight:bold;");
     },
-
-    // 🏆 【完美5轮赛程同步】独立玩家获胜结算核心
+// 🏆 【完美5轮赛程同步】独立玩家获胜结算核心
     handleBattleVictory: function() {
         const b = this.currentNpcBattle;
         const p = gameState.player;
+        if (!b) return;
         b.npcHp = 0; // 强行拉回0，抹平负数血量
 
         const playerRealmIdx = p.realmIdx || 0;
@@ -30190,6 +30402,14 @@ renderNpcBattleUI: function(isVersusMode = true) {
         b.logs.push(`🎁 【胜道机缘】修为提升 [${expReward}] 点，【${attrNameMap[randomAttr]}】+1！`);
         
         console.log(`%c🏆 [大比擂台胜出探针] 成功击败: ${b.npc.name} | 对手境界: ${b.npc.levelName} | 修维: +${expReward}`, "color: #2ecc71; font-weight: bold;");
+
+        // 3. 【核心重构】直接精准写入“仙途手札”数据轨，限制最近50条
+        if (!gameState.world) gameState.world = {};
+        if (!gameState.world.logs) gameState.world.logs = [];
+        gameState.world.logs.unshift(`【演武得胜】在切磋中力克【${b.npc.name}】(${b.npc.levelName})，顿悟玄机，修为增加 ${expReward} 点，${attrNameMap[randomAttr]}属性获得精进。`);
+        if (gameState.world.logs.length > 50) {
+            gameState.world.logs = gameState.world.logs.slice(0, 50);
+        }
 
         // ⚔️ 升级核心：平滑驱动 5 轮大比赛制运转（1~5轮）
         if (b.isTournament && gameState.sectTournament) {
@@ -30218,9 +30438,14 @@ renderNpcBattleUI: function(isVersusMode = true) {
             if (typeof Utils !== 'undefined') {
                 Utils.toast(`🌟 切磋得胜！修为 +${expReward}，${attrNameMap[randomAttr]} +1`, "success"); 
             }
+            
+            // 判断战斗结束：关闭战斗界面并清理状态
             if (b.isTournament && typeof this.openSectTournamentUI === 'function') {
-                this.openSectTournamentUI(); // 战胜后平滑唤回全新的精美花卉风大比界面
+                this.openSectTournamentUI(); // 大比赛程唤回大比UI
+            } else {
+                if (typeof closeModal === 'function') closeModal(); // 普通切磋直接关闭战场模态框
             }
+            this.currentNpcBattle = null; // 清洗卸载战斗实例
         }, 1500);
     },
 
@@ -30228,6 +30453,7 @@ renderNpcBattleUI: function(isVersusMode = true) {
     handleBattleDefeat: function() {
         const b = this.currentNpcBattle;
         const p = gameState.player;
+        if (!b) return;
         b.playerHp = 0;
 
         const playerRealmIdx = p.realmIdx || 0;
@@ -30242,6 +30468,14 @@ renderNpcBattleUI: function(isVersusMode = true) {
             console.log(`%c💀 [大比赛程战败探针] 玩家在第 ${gameState.sectTournament.currentRound} 轮遗憾落败。`, "color:#e74c3c; font-weight:bold;");
         }
 
+        // 3. 【核心重构】直接精准写入“仙途手札”数据轨，限制最近50条
+        if (!gameState.world) gameState.world = {};
+        if (!gameState.world.logs) gameState.world.logs = [];
+        gameState.world.logs.unshift(`【演武惜败】与【${b.npc.name}】切磋时失手落败，道心受挫，散逸修为 ${expLoss} 点。`);
+        if (gameState.world.logs.length > 50) {
+            gameState.world.logs = gameState.world.logs.slice(0, 50);
+        }
+
         if (typeof this.renderNpcBattleUI === 'function') this.renderNpcBattleUI();
         if (typeof this.updateUI_Self === 'function') this.updateUI_Self(); 
         
@@ -30249,12 +30483,16 @@ renderNpcBattleUI: function(isVersusMode = true) {
             if (typeof Utils !== 'undefined') {
                 Utils.toast(`🥋 惜败！道心受损，修为散逸 -${expLoss}`, "info"); 
             }
+            
+            // 判断战斗结束：关闭战斗界面并清理状态
             if (b.isTournament && typeof this.openSectTournamentUI === 'function') {
                 this.openSectTournamentUI();
+            } else {
+                if (typeof closeModal === 'function') closeModal(); // 普通切磋战败关闭模态框
             }
+            this.currentNpcBattle = null; // 清洗卸载战斗实例
         }, 1500);
     },
-
     // 🏮 【双端适配智能版】执行捕获交互界面
     openPetCaptureUI: function() {
         const tStart = performance.now();
