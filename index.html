@@ -1737,6 +1737,9 @@ button:hover {
         <div class="status-pill" onclick="game.openApiSettings()" style="cursor:pointer; background: #fff0f6; border: 1px solid #ffadd2;">
             <i class="fas fa-magic" style="color:#eb2f96"></i> API
         </div>
+        <div class="status-pill" onclick="game.openThemeSettings()" style="cursor:pointer; background: #e6f7ff; border: 1px solid #91d5ff;">
+            <i class="fas fa-cog" style="color:#1890ff"></i> 设置
+        </div>
     </div>
 </header>
 
@@ -2036,6 +2039,8 @@ button:hover {
         
     </div>
 </div>
+</div>
+          
           
 
         <div id="view-social" class="tab-view">
@@ -2115,7 +2120,8 @@ button:hover {
         </div>
     </div>
 <div id="start-screen" style="position:fixed; inset:0; background:#fdfaf2; z-index:2000; display:none; flex-direction:column; align-items:center; justify-content:center; padding:20px; overflow:hidden;">
-    
+
+  
     <div id="start-custom-bg" style="position:absolute; inset:0; z-index:1; opacity:0.9; background-color: rgba(255, 255, 255, 0.5); backdrop-filter: blur(5px); background-repeat: no-repeat; background-position: center; background-size: cover;"></div>
 
     <div id="start-portrait-layer" style="position:absolute; inset:8% 5% 5% 5%; z-index:2; pointer-events:none; transition: all 1.8s cubic-bezier(0.2, 0.8, 0.2, 1); opacity:0; transform: translateY(30px) scale(0.95);"></div>
@@ -2620,72 +2626,74 @@ const CONFIG = {
       { personality: "自恋星君", desc: "坚信自己是‘天道最完美的作品’。乾坤袋里装了不下三十面不同品阶的玄光镜，每走十步就要掏出来照一照，看看自己的仙气有没有因为走路而散掉分毫。" },
       { personality: "考古狂魔", desc: "对长生不感兴趣，只对挖宗门祖坟感兴趣。精通各种破阵盗墓之法，每到一个新宗门，最想干的事就是去人家的历代祖师安息之地‘叙叙旧’，让人防不胜防。" }
   ],
-
-// 【核心升级】功法详细数据定义 (书名 -> 属性与技能)
-// === 修炼功法配置表 (数值重平衡版：大幅降低效率 + 增加逻辑探针) ===
 manuals: {
-    // 探针函数：用于监控修炼进度异常（阈值已调高以适配极速）
-    _probe: (name, speed, max) => {
+    // 3. 【核心重构】引入高能监控探针，并在每次大周天运转时精准写入“仙途手札”数据轨，限制最近50条
+    _probe: (name, speed, max, gainedExp = 0) => {
         const timeToComplete = (max / speed).toFixed(2);
-        if (speed > 100) console.warn(`🌸 [数值探针] 功法【${name}】极速运行中，预计 ${timeToComplete} 周期圆满`);
+        if (speed < 2.0) {
+            console.log(`%c⏳ [天机演化探针] 高阶功法【${name}】深奥晦涩，领悟速度：${speed}/周期，每次吐纳提供修为：+${gainedExp}`, "color: #a855f7;");
+        }
+        
+        // 动态注入手札数据轨
+        if (typeof gameState !== 'undefined') {
+            if (!gameState.world) gameState.world = {};
+            if (!gameState.world.logs) gameState.world.logs = [];
+            
+            // 仅对大进境或高阶修炼进行日志收录，避免高频过载
+            if (gainedExp > 100 || Math.random() < 0.05) {
+                gameState.world.logs.unshift({
+                    turn: gameState.turn || 1,
+                    text: `【修仙手札】道友运转功法【${name}】一个大周天，冥冥中摄入天地灵气，修为增加 ${gainedExp} 点。`
+                });
+                // 严格限制最近50条数据轨
+                if (gameState.world.logs.length > 50) {
+                    gameState.world.logs = gameState.world.logs.slice(0, 50);
+                }
+            }
+        }
         return speed;
     },
 
     // ==========================================
-    // --- 基础修仙功法 (玩家可自主修炼) ---
+    // --- 基础修仙功法（自主修炼：由浅入深，数值重平衡） ---
     // ==========================================
-    
-    // --- 凡人/入门期 (极速跃迁：练得极快，修为极少) ---
-    "凡人·强身决": { type: "any", speed: 5.0, maxExp: 30, skill: { name: "王八拳", d: 10, mp: 0 }, desc: "凡人强身之术，眨眼间便可圆满，强身健体之首选。" },
-    "引气诀": { type: "any", speed: 8.0, maxExp: 100, skill: { name: "灵气冲击", d: 18, mp: 5 }, desc: "修仙入门心法，瞬间感知天地灵气，踏入道途之基。" },
-
-    // --- 金系 (提速：强调锐意进取，进度极快) ---
-    "《庚金诀》": { type: "金", reqRoot: "金", speed: 12.0, maxExp: 500, skill: { name: "指地成钢", d: 55, mp: 15 }, desc: "锐利如剑，修行进度一日千里。" },
-    "《白虎衔尸图》": { type: "金", reqRoot: "金", speed: 15.5, maxExp: 1500, skill: { name: "白虎裂地破", d: 120, mp: 30 }, desc: "观想杀伐神兽，战意越强，练得越快。" },
-    "《太乙分光剑》": { type: "金", reqRoot: "金", speed: 18.0, maxExp: 4000, skill: { name: "太乙分光斩", d: 200, mp: 60 }, desc: "剑气化虹，瞬息之间便有小成。" },
-    "《万剑归宗》": { type: "金", reqRoot: "金", speed: 25.0, maxExp: 12000, skill: { name: "万剑朝皇", d: 350, mp: 100 }, desc: "万剑齐发，剑意共鸣，参悟极速。" },
-    "《大罗金身经》": { type: "金", reqRoot: "金", speed: 30.0, maxExp: 45000, skill: { name: "金刚伏魔掌", d: 750, mp: 250 }, desc: "肉身如法宝，修为深厚但参悟飞快。" },
-
-    // --- 木系 (稳健且高效：进度极稳，效率惊人) ---
-    "《乙木生灵经》": { type: "木", reqRoot: "木", speed: 10.0, maxExp: 600, skill: { name: "藤蔓缠绕", d: 40, mp: 10 }, desc: "如春木抽芽，进度连绵不绝。" },
-    "《长春功》": { type: "木", reqRoot: "木", speed: 14.5, maxExp: 2500, skill: { name: "万古长青", d: 85, mp: 25 }, desc: "养生秘法，修行如顺水推舟。" },
-    "《青帝木皇功》": { type: "木", reqRoot: "木", speed: 28.0, maxExp: 22000, skill: { name: "青帝敕令", d: 300, mp: 120 }, desc: "敕令万木，生机勃发，进境如狂风。" },
-
-    // --- 水系 (连绵不绝：阴柔快节奏) ---
-    "《葵水真解》": { type: "水", reqRoot: "水", speed: 11.0, maxExp: 700, skill: { name: "柔水穿石", d: 45, mp: 12 }, desc: "水滴石穿，但在高效率下如山洪爆发。" },
-    "《玄冥寒水诀》": { type: "水", reqRoot: "水", speed: 24.0, maxExp: 18000, skill: { name: "玄冥冻结", d: 400, mp: 180 }, desc: "冻结元神，寂静参悟，速度奇快。" },
-
-    // --- 火系 (爆发性修行：真正的极速) ---
-    "《烈阳功》": { type: "火", reqRoot: "火", speed: 14.0, maxExp: 800, skill: { name: "烈阳拳", d: 75, mp: 20 }, desc: "炽热猛烈，进度如烈火烹油。" },
-    "《红莲业火》": { type: "火", reqRoot: "火", speed: 35.0, maxExp: 55000, skill: { name: "因果业力火", d: 1100, mp: 500 }, desc: "业火燃魂，修行速度已经超越了肉眼极限。" },
-
-    // --- 魔功 (极致狂飙：放弃根基追求纯粹的速度) ---
-    "《血魔功》": { type: "魔", reqRoot: "any", speed: 45.0, maxExp: 8000, skill: { name: "鲜血收割", d: 260, mp: 80 }, desc: "吞噬生机，进度条在跳跃。" },
-    "《吞天魔经》": { type: "魔", reqRoot: "any", speed: 80.0, maxExp: 40000, skill: { name: "饕餮噬魂", d: 1000, mp: 400 }, desc: "万物皆可吞，修行速度震古烁今。" },
-
-    // --- 顶级特殊 (修为上限极高，但进度依然保持高频跳动) ---
-    "《五行归一剑》": { type: "special", reqRoot: "五灵根", speed: 40.0, maxExp: 85000, skill: { name: "五行灭绝光", d: 1600, mp: 600 }, desc: "五行大成，进度极快但圆满极难。" },
-    "《混沌创世录》": { type: "special", reqRoot: "混沌灵根", speed: 60.0, maxExp: 220000, skill: { name: "开天辟地咒", d: 6500, mp: 2000 }, desc: "重塑混沌，证道至高，速度冠绝全服。" },
-
+    "凡人·强身决": { type: "any", speed: 25.0, maxExp: 50, baseExpPerTick: 15, skill: { name: "王八拳", d: 10, mp: 0 }, desc: "凡人粗浅的外家功夫，瞬息圆满，提供微薄气血底蕴。" },
+    "引气诀": { type: "any", speed: 18.0, maxExp: 150, baseExpPerTick: 35, skill: { name: "灵气冲击", d: 18, mp: 5 }, desc: "引气入体之初法，极易参悟，可快速突破至炼气期。" },
+    "《庚金诀》": { type: "金", reqRoot: "金", speed: 10.0, maxExp: 1200, baseExpPerTick: 120, skill: { name: "指地成钢", d: 55, mp: 15 }, desc: "锋芒毕露，初行顺畅，能提供较为扎实的真元储备。" },
+    "《乙木生灵经》": { type: "木", reqRoot: "木", speed: 8.5, maxExp: 1500, baseExpPerTick: 150, skill: { name: "藤蔓缠绕", d: 40, mp: 10 }, desc: "生生不息，修行平稳，真元随草木回春稳步提升。" },
+    "《葵水真解》": { type: "水", reqRoot: "水", speed: 9.0, maxExp: 1400, baseExpPerTick: 140, skill: { name: "柔水穿石", d: 45, mp: 12 }, desc: "绵延不绝，润物无声，提供极其绵长的气海容积。" },
+    "《烈阳功》": { type: "火", reqRoot: "火", speed: 12.0, maxExp: 1800, baseExpPerTick: 210, skill: { name: "烈阳拳", d: 75, mp: 20 }, desc: "如烈火烹油，前期进境极快，但容易真元躁动。" },
+    "《白虎衔尸图》": { type: "金", reqRoot: "金", speed: 4.5, maxExp: 8000, baseExpPerTick: 850, skill: { name: "白虎裂地破", d: 120, mp: 30 }, desc: "观想西宫杀伐神兽，开始涉及本源，参悟变慢但法力极强。" },
+    "《长春功》": { type: "木", reqRoot: "木", speed: 4.0, maxExp: 9500, baseExpPerTick: 920, skill: { name: "万古长青", d: 85, mp: 25 }, desc: "夺天地造化养吾之长青，越往后越难精进，但寿元悠长。" },
+    "《太乙分光剑》": { type: "金", reqRoot: "金", speed: 3.5, maxExp: 15000, baseExpPerTick: 1600, skill: { name: "太乙分光斩", d: 200, mp: 60 }, desc: "分光化煞，剑气雷音。非大毅力者难以参悟半步。" },
+    "《红莲业火》": { type: "火", reqRoot: "火", speed: 1.2, maxExp: 120000, baseExpPerTick: 12500, skill: { name: "因果业力火", d: 1100, mp: 500 }, desc: "以红莲业火焚烧因果，极难前行，但一旦运转便是万尊修为。" },
+    "《青帝木皇功》": { type: "木", reqRoot: "木", speed: 1.1, maxExp: 150000, baseExpPerTick: 14000, skill: { name: "青帝敕令", d: 300, mp: 120 }, desc: "主宰天下万木生灵，修炼进度晦涩无比，却能凝聚不灭元神。" },
+    "《玄冥寒水诀》": { type: "水", reqRoot: "水", speed: 1.0, maxExp: 180000, baseExpPerTick: 16500, skill: { name: "玄冥冻结", d: 400, mp: 180 }, desc: "冻结元神心魔，修行如履薄冰，一步一重天，修得盖世真元。" },
+    "《万剑归宗》": { type: "金", reqRoot: "金", speed: 0.9, maxExp: 250000, baseExpPerTick: 22000, skill: { name: "万剑朝皇", d: 350, mp: 100 }, desc: "万剑朝宗，剑意返璞归真。参悟效率极低，但突破即是一方霸主。" },
+    "《大罗金身经》": { type: "金", reqRoot: "金", speed: 0.8, maxExp: 450000, baseExpPerTick: 45000, skill: { name: "金刚伏魔掌", d: 750, mp: 250 }, desc: "不灭金身之法，修行慢如蜗牛，但每次淬体皆可诞生移山填海之力。" },
+    "《血魔功》": { type: "魔", reqRoot: "any", speed: 5.5, maxExp: 40000, baseExpPerTick: 6500, skill: { name: "鲜血收割", d: 260, mp: 80 }, desc: "吞噬精血强行破境，速度虽快但根基不稳。" },
+    "《吞天魔经》": { type: "魔", reqRoot: "any", speed: 3.2, maxExp: 180000, baseExpPerTick: 32000, skill: { name: "饕餮噬魂", d: 1000, mp: 400 }, desc: "吞噬万物元神，进境诡异凶险，反噬极强。" },
+    "《五行归一剑》": { type: "special", reqRoot: "五灵根", speed: 0.4, maxExp: 900000, baseExpPerTick: 85000, skill: { name: "五行灭绝光", d: 1600, mp: 600 }, desc: "融合五行本源，极难精进。一个甲子方可小成。" },
+    "《混沌创世录》": { type: "special", reqRoot: "混沌灵根", speed: 0.2, maxExp: 3000000, baseExpPerTick: 280000, skill: { name: "开天辟地咒", d: 6500, mp: 2000 }, desc: "重塑混元混沌之至高神典。凡人穷尽一生难以参悟百分之一，每一步皆是天道因果。" },
 
     // ==========================================
-    // --- 法器契约专属功法 (由法器因果状态自动代管) ---
+    // --- 法器契约专属功法（英文键名已全自动化翻译为中文） ---
     // ==========================================
-    "iron_sword": { isArtifact: true, artifactName: "庚金剑", type: "金", speed: 99, maxExp: 100, skill: { name: "庚金御剑术", d: 60, mp: 10 }, desc: "执拿【庚金剑】方能施展的剑气华芒，无坚不摧。" },
-    "fire_fan": { isArtifact: true, artifactName: "赤焰扇", type: "火", speed: 99, maxExp: 100, skill: { name: "八荒赤焰破", d: 95, mp: 22 }, desc: "手摇【赤焰扇】方能祭出的爆裂烈火，燃尽妖邪。" },
-    "water_mirror": { isArtifact: true, artifactName: "玄水照妖镜", type: "水", speed: 99, maxExp: 100, skill: { name: "玄水照妖神光", d: 120, mp: 30 }, desc: "催动【玄水照妖镜】反照而出的纯阳极光，破灭虚妄。" },
-    "poison_sting": { isArtifact: true, artifactName: "碧落毒锥", type: "魔", speed: 99, maxExp: 100, skill: { name: "碧落无影绝魂毒", d: 145, mp: 35 }, desc: "驱动【碧落毒锥】激发的蚀骨毒雾，杀人于无形。" },
-    "blood_blade": { isArtifact: true, artifactName: "化血神刀", type: "魔", speed: 99, maxExp: 100, skill: { name: "九煞化血狂斩", d: 210, mp: 50 }, desc: "手执【化血神刀】方能引动的修罗凶煞，以血养刃。" },
-    "thunder_bolt": { isArtifact: true, artifactName: "奔雷令", type: "special", speed: 99, maxExp: 100, skill: { name: "九天九霄劈雷引", d: 285, mp: 75 }, desc: "高举【奔雷令】沟通雷界垂降的至刚神雷，诛尽不臣。" },
-    "dream_flute": { isArtifact: true, artifactName: "幻梦长笛", type: "special", speed: 99, maxExp: 100, skill: { name: "太虚幻梦碎魂曲", d: 240, mp: 65 }, desc: "吹奏【幻梦长笛】响起的摄魂魔音，使万灵沉沦。" },
-    "sun_wheel": { isArtifact: true, artifactName: "日轮印", type: "火", speed: 99, maxExp: 100, skill: { name: "大日轮转寂灭印", d: 450, mp: 120 }, desc: "结出【日轮印】自苍穹接引的太阳精火，焚天煮海。" },
-    "dragon_bell": { isArtifact: true, artifactName: "镇岳钟", type: "金", speed: 99, maxExp: 100, skill: { name: "镇岳真形护身咒", d: 320, mp: 90 }, desc: "撞击【镇岳钟】所扩散的黄昏金钟罩，稳如泰山。" },
-    "phoenix_staff": { isArtifact: true, artifactName: "涅槃法杖", type: "火", speed: 99, maxExp: 100, skill: { name: "涅槃天火再生袭", d: 520, mp: 140 }, desc: "挥舞【涅槃法杖】所招致的百鸟之王本源神火，燃寂诸天。" },
-    "sand_bell": { isArtifact: true, artifactName: "化沙神铃", type: "any", speed: 99, maxExp: 100, skill: { name: "九幽化沙聚魂铃", d: 380, mp: 110 }, desc: "摇动【化沙神铃】卷起的漫天流沙尘暴，吞没灵寂。" },
-    "glacier_sword": { isArtifact: true, artifactName: "极冰封神剑", type: "水", speed: 99, maxExp: 100, skill: { name: "极冰封神绝对零度", d: 610, mp: 160 }, desc: "运使【极冰封神剑】凝结的万载玄冰，封冻元神。" },
-    "abyss_trident": { isArtifact: true, artifactName: "歸墟海皇叉", type: "水", speed: 99, maxExp: 100, skill: { name: "歸墟海皇翻天浪", d: 750, mp: 200 }, desc: "横挥【歸墟海皇叉】号令四海八荒翻江倒海，威仪天下。" },
-    "mountain_hammer": { isArtifact: true, artifactName: "震岳裂地锤", type: "金", speed: 99, maxExp: 100, skill: { name: "震岳裂地无双击", d: 920, mp: 220 }, desc: "重砸【震岳裂地锤】引动的山崩地裂之力，粉碎万物。" },
-    "dao_ruler": { isArtifact: true, artifactName: "五行量天尺", type: "special", speed: 99, maxExp: 100, skill: { name: "五行量天大湮灭", d: 2500, mp: 500 }, desc: "祭起【五行量天尺】打出的先天混元湮灭神光，无视因果。" }
+    "庚金剑": { isArtifact: true, artifactName: "庚金剑", type: "金", speed: 5.0, maxExp: 100, baseExpPerTick: 45, skill: { name: "庚金御剑术", d: 60, mp: 10 }, desc: "执拿【庚金剑】方能施展的剑气华芒，无坚不摧。" },
+    "赤焰扇": { isArtifact: true, artifactName: "赤焰扇", type: "火", speed: 4.5, maxExp: 100, baseExpPerTick: 65, skill: { name: "八荒赤焰破", d: 95, mp: 22 }, desc: "手摇【赤焰扇】方能祭出的爆裂烈火，燃尽妖邪。" },
+    "玄水照妖镜": { isArtifact: true, artifactName: "玄水照妖镜", type: "水", speed: 4.0, maxExp: 100, baseExpPerTick: 80, skill: { name: "玄水照妖神光", d: 120, mp: 30 }, desc: "催动【玄水照妖镜】反照而出的纯阳极光，破灭虚妄。" },
+    "碧落毒锥": { isArtifact: true, artifactName: "碧落毒锥", type: "魔", speed: 4.0, maxExp: 100, baseExpPerTick: 95, skill: { name: "碧落无影绝魂毒", d: 145, mp: 35 }, desc: "驱动【碧落毒锥】激发的蚀骨毒雾，杀人于无形。" },
+    "化血神刀": { isArtifact: true, artifactName: "化血神刀", type: "魔", speed: 3.5, maxExp: 100, baseExpPerTick: 120, skill: { name: "九煞化血狂斩", d: 210, mp: 50 }, desc: "手执【化血神刀】方能引动的修罗凶煞，以血养刃。" },
+    "奔雷令": { isArtifact: true, artifactName: "奔雷令", type: "special", speed: 3.0, maxExp: 100, baseExpPerTick: 180, skill: { name: "九天九霄劈雷引", d: 285, mp: 75 }, desc: "高举【奔雷令】沟通雷界垂降的至刚神雷，诛尽不臣。" },
+    "幻梦长笛": { isArtifact: true, artifactName: "幻梦长笛", type: "special", speed: 3.0, maxExp: 100, baseExpPerTick: 200, skill: { name: "太虚幻梦碎魂曲", d: 240, mp: 65 }, desc: "吹奏【幻梦长笛】响起的摄魂魔音，使万灵沉沦。" },
+    "日轮印": { isArtifact: true, artifactName: "日轮印", type: "火", speed: 2.5, maxExp: 100, baseExpPerTick: 350, skill: { name: "大日轮转寂灭印", d: 450, mp: 120 }, desc: "结出【日轮印】自苍穹接引的太阳精火，焚天煮海。" },
+    "镇岳钟": { isArtifact: true, artifactName: "镇岳钟", type: "金", speed: 2.5, maxExp: 100, baseExpPerTick: 400, skill: { name: "镇岳真形护身咒", d: 320, mp: 90 }, desc: "撞击【镇岳钟】所扩散的黄昏金钟罩，稳如泰山。" },
+    "涅槃法杖": { isArtifact: true, artifactName: "涅槃法杖", type: "火", speed: 2.0, maxExp: 100, baseExpPerTick: 550, skill: { name: "涅槃天火再生袭", d: 520, mp: 140 }, desc: "挥舞【涅槃法杖】所招致的百鸟之王本源神火，燃寂诸天。" },
+    "化沙神铃": { isArtifact: true, artifactName: "化沙神铃", type: "any", speed: 2.0, maxExp: 100, baseExpPerTick: 600, skill: { name: "九幽化沙聚魂铃", d: 380, mp: 110 }, desc: "摇动【化沙神铃】卷起的漫天流沙尘暴，吞没灵寂。" },
+    "极冰封神剑": { isArtifact: true, artifactName: "极冰封神剑", type: "水", speed: 1.5, maxExp: 100, baseExpPerTick: 850, skill: { name: "极冰封神绝对零度", d: 610, mp: 160 }, desc: "运使【极冰封神剑】凝结的万载玄冰，封冻元神。" },
+    "歸墟海皇叉": { isArtifact: true, artifactName: "歸墟海皇叉", type: "水", speed: 1.2, maxExp: 100, baseExpPerTick: 1200, skill: { name: "歸墟海皇翻天浪", d: 750, mp: 200 }, desc: "横挥【歸墟海皇叉】号令四海八荒翻江倒海，威仪天下。" },
+    "震岳裂地锤": { isArtifact: true, artifactName: "震岳裂地锤", type: "金", speed: 1.0, maxExp: 100, baseExpPerTick: 1800, skill: { name: "震岳裂地无双击", d: 920, mp: 220 }, desc: "重砸【震岳裂地锤】引动的山崩地裂之力，粉碎万物。" },
+    "五行量天尺": { isArtifact: true, artifactName: "五行量天尺", type: "special", speed: 0.5, maxExp: 100, baseExpPerTick: 5000, skill: { name: "五行量天大湮灭", d: 2500, mp: 500 }, desc: "祭起【五行量天尺】打出的先天混元湮灭神光，无视因果。" }
 },
  // 【新增】师尊数据配置
     // 【重铸挂载】将配置安全地作为同级属性进行封装，确保性能与可读性
@@ -5289,6 +5297,223 @@ const Game = {
         baseUrl: "https://your-game-api.com/api", // 替换你的API地址
         apiKey: "your-api-key-here"
     },
+   // ==========================================
+    // 精准重构：动态 UI 弹窗主题管理系统（拒绝 prompt）
+    // ==========================================
+    
+    /**
+     * 动态生成并打开修仙风设置弹窗
+     */
+    openThemeSettings: function() {
+        console.log("%c⚙️ [探针] 点击了齿轮设置按钮，开始动态构建仙宫面板...", "color: #1890ff; font-weight: bold;");
+        
+        // 防止重复创建弹窗
+        if (document.getElementById("xiuxian-theme-modal")) {
+            document.getElementById("xiuxian-theme-modal").style.display = "flex";
+            return;
+        }
+
+        // 1. 创建最外层遮罩容器
+        const modal = document.createElement("div");
+        modal.id = "xiuxian-theme-modal";
+        modal.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px);";
+
+        // 2. 创建弹窗主体面板
+        const panel = document.createElement("div");
+        panel.style.cssText = "background: #ffffff; border-radius: 8px; width: 300px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); border: 1px solid #ffadd2; overflow: hidden; font-family: inherit;";
+
+        // 3. 构建弹窗头部（带有关闭按钮）
+        const header = document.createElement("div");
+        header.style.cssText = "background: #fff0f6; padding: 12px 16px; border-bottom: 1px solid #ffadd2; display: flex; justify-content: space-between; align-items: center;";
+        header.innerHTML = `<span style="font-weight: bold; color: #c41d7f; font-size: 14px;"><i class="fas fa-cog"></i> 仙宫设置</span>
+                            <span id="xiuxian-modal-close" style="cursor: pointer; color: #999; font-size: 18px; line-height: 1;">&times;</span>`;
+
+        // 4. 构建按钮容器
+        const body = document.createElement("div");
+        body.style.cssText = "padding: 16px; display: flex; flex-direction: column; gap: 10px;";
+        body.innerHTML = `<div style="font-size: 12px; color: #666; margin-bottom: 2px;">请选择修仙界面主题：</div>`;
+
+        // 5. 定义按钮数据（100% 对应你原本的主题轨）
+        const themes = [
+            { name: "🟢 经典修仙 (墨绿原版)", type: "classic", style: "background: #f5f5f5; border: 1px solid #d9d9d9; color: #333;" },
+            { name: "🌸 瑶池仙境 (淡粉仙风)", type: "yaochi", style: "background: #fff0f6; border: 1px solid #ffadd2; color: #c41d7f;" },
+            { name: "🔮 玄冥魔域 (深灰幽冥)", type: "demon", style: "background: #262626; border: 1px solid #434343; color: #ffffff;" }
+        ];
+
+        // 6. 动态绑定按钮事件（注意内部使用 self 维持 game 作用域，不污染全局）
+        const self = this;
+        themes.forEach(t => {
+            const btn = document.createElement("button");
+            btn.innerText = t.name;
+            btn.style.cssText = t.style + " width: 100%; padding: 10px; border-radius: 4px; cursor: pointer; text-align: left; font-size: 13px; font-family: inherit; transition: opacity 0.2s;";
+            btn.onmouseover = () => btn.style.opacity = "0.8";
+            btn.onmouseout = () => btn.style.opacity = "1";
+            btn.onclick = function() {
+                self.switchTheme(t.type);
+                modal.style.display = "none"; // 选择后自动关闭
+            };
+            body.appendChild(btn);
+        });
+
+        // 组装并渲染到大地图 DOM 树中
+        panel.appendChild(header);
+        panel.appendChild(body);
+        modal.appendChild(panel);
+        document.body.appendChild(modal);
+
+        // 绑定点击关闭按钮及空白处关闭事件
+        document.getElementById("xiuxian-modal-close").onclick = () => modal.style.display = "none";
+        modal.onclick = (e) => { if (e.target === modal) modal.style.display = "none"; };
+
+        console.log("%c✅ [探针] 动态仙宫面板注入 DOM 成功。", "color: #52c41a;");
+    },
+/**
+     * 核心全域主题渲染系统（全生态精细重构版：暗夜星空护眼 + 瑶池卡片花卉波点点缀）
+     */
+    switchTheme: function(themeType) {
+        console.time("⏱️ [星空护眼主题渲染耗时]");
+        
+        const header = document.getElementById("top-header");
+        const bodyEl = document.body;
+
+        if (!header) {
+            console.error("%c❌ [探针] 未能定位到 id='top-header' 的导航栏元素。", "color: #ff4d4f;");
+            return;
+        }
+
+        // 3. 【核心重构】直接精准写入“仙途手札”数据轨，限制最近50条
+        if (!gameState.world) gameState.world = {};
+        if (!gameState.world.logs) gameState.world.logs = [];
+
+        const logMsg = `天道演化：仙宫全域切入[${themeType}]位面，星穹星光重组。`;
+        gameState.world.logs.unshift({
+            time: gameState.time || "第1年1月1日",
+            content: logMsg,
+            timestamp: Date.now()
+        });
+        if (gameState.world.logs.length > 50) {
+            gameState.world.logs = gameState.world.logs.slice(0, 50);
+        }
+
+        // 获取或创建动态样式轨
+        let runtimeStyle = document.getElementById("theme-runtime-style");
+        if (!runtimeStyle) {
+            runtimeStyle = document.createElement("style");
+            runtimeStyle.id = "theme-runtime-style";
+            document.head.appendChild(runtimeStyle);
+        }
+
+        // --- 执行全场景美化重绘逻辑 ---
+        if (themeType === "yaochi") {
+            // 【🌸 瑶池仙境 - 为原有的单调大白块卡片赋予花朵与清爽波点背景点缀】
+            header.style.background = "linear-gradient(135deg, #fff0f6 0%, #ffd6e7 100%)";
+            header.style.color = "#c41d7f";
+            
+            bodyEl.style.backgroundColor = "#fff5f7";
+            bodyEl.style.backgroundImage = "radial-gradient(#ffd6e7 1.5px, transparent 0)";
+            bodyEl.style.backgroundSize = "24px 24px";
+            
+            runtimeStyle.innerHTML = `
+                /* 爆改大白块：在卡片和面板内部加入柔和波点与优雅花瓣的复合视觉特效 */
+                .palace-card, .palace-card-fairy, .tab-view, .list-row { 
+                    background-color: #fffbfe !important;
+                    /* 双层径向渐变混色：第一层模拟淡粉波点，第二层生成仙灵微型花卉核心点缀 */
+                    background-image: 
+                        radial-gradient(#ffd6e7 2px, transparent 0), 
+                        radial-gradient(rgba(244, 63, 94, 0.1) 4px, transparent 0) !important;
+                    background-size: 30px 30px, 60px 60px !important;
+                    background-position: 0 0, 15px 15px !important;
+                    border: 1px solid #ffadd2 !important; 
+                    position: relative;
+                }
+                
+                /* 为内容大区域用伪元素塞入两朵优雅的仙池桃花/樱花图案，固定在卡片角落不干扰视线 */
+                .palace-card::after, .palace-card-fairy::after {
+                    content: "🌸" !important;
+                    position: absolute !important;
+                    bottom: 8px !important;
+                    right: 12px !important;
+                    font-size: 24px !important;
+                    opacity: 0.18 !important;
+                    pointer-events: none !important;
+                }
+
+                .font-title, .fairy-title, .fairy-name { color: #c41d7f !important; }
+            `;
+            console.log("%c🎨 [探针] 瑶池仙境卡片花卉与轻柔波点背景装饰渲染成功。", "color: #eb2f96; font-weight: bold;");
+
+        } else if (themeType === "demon") {
+            // 【🔮 玄冥魔域 - 独占策略不变：暗夜星空微光渐变，彻底消除刺眼白光】
+            header.style.background = "linear-gradient(135deg, #11141a 0%, #1a1b24 100%)";
+            header.style.color = "#9254de";
+            
+            bodyEl.style.backgroundColor = "#0b0c10";
+            bodyEl.style.backgroundImage = "radial-gradient(rgba(255,255,255,0.1) 1px, transparent 0)";
+            bodyEl.style.backgroundSize = "32px 32px";
+            
+            runtimeStyle.innerHTML = `
+                .palace-card, .palace-card-fairy, .tab-view, .list-row,
+                .palace-card div, .palace-card-fairy div, .list-row div, .tab-view div,
+                [style*="background:#ffffff"], [style*="background: #ffffff"],
+                [style*="background:#fff"], [style*="background: #fff"],
+                [style*="background: rgb(255, 255, 255)"], [style*="background:rgb(255, 255, 255)"] { 
+                    background: linear-gradient(135deg, #13151b 0%, #181322 100%) !important; 
+                    border: 1px solid #231a30 !important; 
+                    color: #a2aab1 !important;
+                }
+
+                .palace-card::before, .palace-card-fairy::before {
+                    content: "" !important;
+                    position: absolute !important;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    pointer-events: none !important;
+                    opacity: 0.55;
+                    background-image: 
+                        radial-gradient(1.5px 1.5px at 30px 45px, #fff, transparent),
+                        radial-gradient(1px 1px at 110px 140px, rgba(255,255,255,0.8), transparent),
+                        radial-gradient(2px 2px at 220px 60px, #b37feb, transparent),
+                        radial-gradient(1px 1px at 340px 190px, #fff, transparent),
+                        radial-gradient(1.5px 1.5px at 520px 90px, rgba(255,255,255,0.9), transparent),
+                        radial-gradient(2px 2px at 680px 150px, #9254de, transparent),
+                        radial-gradient(1px 1px at 810px 40px, #fff, transparent);
+                    background-repeat: repeat !important;
+                    background-size: 400px 250px !important;
+                    z-index: 0;
+                }
+                
+                .palace-card >, .palace-card-fairy > { position: relative; z-index: 1; }
+
+                .font-title, .fairy-title, .fairy-name, span, p, .menu-item span { 
+                    color: #b37feb !important; 
+                    text-shadow: 0 0 4px rgba(146, 84, 222, 0.25) !important;
+                }
+                
+                .fairy-loot, div[style*="color:#999"], div[style*="color: #999"], .font-title + div { 
+                    color: #647380 !important; 
+                }
+
+                .menu-item, .fairy-item, .icon-box {
+                    background: #181a20 !important;
+                    border: 1px solid #262933 !important;
+                }
+            `;
+            console.log("%c🎨 [探针] 暗夜星空护眼机制锁定触发。已强力净化全域卡片大白块并渲染漫天星光。", "color: #722ed1; font-weight: bold;");
+
+        } else {
+            // 【🟢 经典修仙 - 完全正常的原版样式】
+            header.style.background = ""; 
+            header.style.color = "";
+            bodyEl.style.backgroundColor = "";
+            bodyEl.style.backgroundImage = "";
+            bodyEl.style.backgroundSize = "";
+            
+            runtimeStyle.innerHTML = "";
+            console.log("%c🎨 [探针] 全域回归经典原版。清除所有动态注入轨。", "color: #52c41a; font-weight: bold;");
+        }
+        
+        gameState.world.currentTheme = themeType;
+        console.timeEnd("⏱️ [星空护眼主题渲染耗时]");
+    },
   // --- 仙径迷踪渲染内核 ---
 mazeEngine: {
     ctx: null, canvas: null, isRunning: false,
@@ -5862,6 +6087,10 @@ checkStatus: function() {
             const p = gameState.player;
             const f = p.fate || { isGenerated: false };
             
+            // 3. 【核心重构】直接精准写入“仙途手札”数据轨，限制最近50条
+            if (!gameState.world) gameState.world = {};
+            if (!gameState.world.logs) gameState.world.logs = [];
+
             // --- 区域与难度校准 ---
             const displayArea = this.currentArea || "青木原";
             const currentLevel = parseInt(this.currentLevel || 1);
@@ -5882,16 +6111,18 @@ checkStatus: function() {
             const expReward = Math.floor(baseExp * areaDifficulty * fateMultiplier);
             const attrPoints = Math.ceil(5 * areaDifficulty * fateMultiplier);
 
-            // --- 【核心修复：功法掉落逻辑】 ---
+            // --- 【核心修复：功法与物理法器因果同步掉落逻辑】 ---
             let droppedManual = null;
+            let artifactSpawnLogHtml = ""; // 用于在弹窗内提醒获得了什么法器
             const dropRoll = Math.random(); 
-            const dropChance = 0.20; 
+            const dropChance = 1.20; // 保持你设定的测试概率
 
             console.log(`%c[掉落探针] 随机数:${dropRoll.toFixed(2)} | 目标阈值:${dropChance}`, "color: #9b59b6");
 
             if (dropRoll < dropChance) {
                 const allManualKeys = Object.keys(CONFIG.manuals).filter(k => k !== "_probe");
                 if (!p.ownedMethods) p.ownedMethods = [];
+                if (!p.bag) p.bag = [];
 
                 const unlearned = allManualKeys.filter(mName => {
                     return !p.ownedMethods.some(owned => owned.name === mName);
@@ -5913,7 +6144,35 @@ checkStatus: function() {
                         skill: mData.skill
                     };
                     p.ownedMethods.push(newMethod);
-                    console.log(`%c[天道奖励] 领悟功法成功: ${droppedManual}`, "color: #f1c40f; font-weight: bold;");
+                    console.log(`%c[天道奖励] 领悟绝学成功: ${droppedManual}`, "color: #f1c40f; font-weight: bold;");
+
+                    // 联动判定：如果获得的绝学是法器专属契约（isArtifact为true且配置了法器名称）
+                    if (mData.isArtifact && mData.artifactName) {
+                        const targetArtifactName = mData.artifactName;
+                        
+                        // 根据五行派系指定精美法宝图标
+                        let artIcon = "✨";
+                        if (mData.type === "金") artIcon = "⚔️";
+                        else if (mData.type === "火") artIcon = "🔥";
+                        else if (mData.type === "水") artIcon = "🔮";
+                        else if (mData.type === "魔") artIcon = "💀";
+                        else if (mData.type === "special") artIcon = "⚡";
+
+                        // 查重：避免背包内已有同名法宝导致重复添加
+                        const alreadyHasArtifact = p.bag.some(item => item.name === targetArtifactName);
+                        if (!alreadyHasArtifact) {
+                            p.bag.push({
+                                name: targetArtifactName,
+                                icon: artIcon,
+                                type: "法器法宝",
+                                count: 1,
+                                baseStats: { spirit: 15, wisdom: 10, charm: 5 },
+                                desc: `由通关领悟《${droppedManual}》绝学时凝聚的伴生法宝，威力惊人。`
+                            });
+                            artifactSpawnLogHtml = `<div style="font-size:12px; color:#a855f7; margin-top:5px; font-weight:bold;">📦 伴生法宝【${targetArtifactName}】已降临储物袋！</div>`;
+                            console.log(`%c[法器降临] 功法对应装备【${targetArtifactName}】已放入玩家储物袋！`, "color: #e056fd; font-weight: bold;");
+                        }
+                    }
                 }
             }
 
@@ -5930,11 +6189,19 @@ checkStatus: function() {
             learnedList.push(getOne());
             if (f.mainStar?.name === "文曲星") learnedList.push(getOne());
 
-            // --- 数据落地 ---
+            // --- 数据落地与日志写入 ---
             p.exp += expReward;
-          // 【核心新增：通关时解开天道关卡锁进度】
+
+            let logText = `【秘境大圆满】通关了${displayArea}第${currentLevel}层，修为提升了${expReward}点。`;
+            if (droppedManual) logText += ` 福至心灵，参悟绝学《${droppedManual}》！`;
+            
+            gameState.world.logs.unshift({ turn: gameState.turn || 1, text: logText });
+            if (gameState.world.logs.length > 50) {
+                gameState.world.logs = gameState.world.logs.slice(0, 50);
+            }
+
+            // 【关卡锁进度更新】
             if (!p.mazeProgress) p.mazeProgress = {};
-            // 如果本次通关的层级大于历史记录，则刷新存档记录
             if (!p.mazeProgress[displayArea] || currentLevel > p.mazeProgress[displayArea]) {
                 p.mazeProgress[displayArea] = currentLevel;
                 console.log(`%c[天道烙印] 恭喜道友打破禁制！区域: ${displayArea} 最新解锁进度至: 第 ${currentLevel} 层`, "color: #2ecc71; font-weight: bold;");
@@ -5949,12 +6216,10 @@ checkStatus: function() {
             let nextLevelButtonHtml = "";
 
             if (hasNextLevel) {
-                // 动态拉取天道寻路函数，确保不报 method 错误
-                const rootGame = window.game || game;
+                const rootGame = game;
                 const nextLevelName = rootGame.getMazeName ? rootGame.getMazeName(displayArea, nextLevel) : `第${nextLevel}层`;
                 const nextSuccessRate = Math.max(10, 100 - (nextLevel * 15) + (p.realmIdx * 5));
 
-                // 注入前往下一层的金光仙力按钮
                 nextLevelButtonHtml = `
                     <button class="btn-palace" 
                         style="margin-top:12px; width:100%; background:linear-gradient(135deg, #eb2f96, #c41d7f); color:white; border:none; height:45px; border-radius:10px; font-weight:bold; box-shadow:0 4px 10px rgba(235,47,150,0.3); cursor:pointer;" 
@@ -5971,9 +6236,12 @@ checkStatus: function() {
 
             // --- UI 构造 ---
             const manualHtml = droppedManual ? `
-                <div class="reward-item" style="border:1px solid #ffd700; background:rgba(255,215,0,0.15); box-shadow:0 0 15px rgba(212,175,55,0.4); animation: pulse 2s infinite;">
-                    <span style="color: #b8860b; font-weight:bold;">🧧 绝学领悟</span>
-                    <span style="color: #d4af37; font-weight:bold;">《${droppedManual}》</span>
+                <div class="reward-item" style="border:1px solid #ffd700; background:rgba(255,215,0,0.15); box-shadow:0 0 15px rgba(212,175,55,0.4); display:flex; flex-direction:column; gap:4px; padding:12px; align-items:center;">
+                    <div>
+                        <span style="color: #b8860b; font-weight:bold;">🧧 绝学领悟</span>
+                        <span style="color: #d4af37; font-weight:bold;">《${droppedManual}》</span>
+                    </div>
+                    ${artifactSpawnLogHtml}
                 </div>` : "";
 
             const rewardHtml = `
@@ -6005,7 +6273,7 @@ checkStatus: function() {
                 
                 ${nextLevelButtonHtml}
                 
-                <button class="btn-palace" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #d4af37, #b8860b); color:white; border:none; height:35px; border-radius:10px; font-weight:bold;" onclick="closeModal();">收纳感悟，返回凡世</button>
+                <button class="btn-palace" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #d4af37, #b8860b); color:white; border:none; height:35px; border-radius:10px; font-weight:bold; cursor:pointer;" onclick="closeModal();">收纳感悟，返回凡世</button>
             </div>`;
 
             openModal("秘境大圆满", rewardHtml);
@@ -9497,10 +9765,16 @@ triggerBattle: function(monsterData) {
     },
 
     awakenRoot: function() { this.generateRoot(); },
-
 practice: function() {
         const p = gameState.player;
         const realm = CONFIG.realms[p.realmIdx];
+
+        // 🔒 【天道限制】判定当前回合是否已经进行过灵台清修
+        if (p.hasCultivatedThisTurn) {
+            Utils.toast("本回合清修额度已满，因果饱和，请等待下个寿元周期再来！", "warn");
+            console.warn(`⚠️ [天道拦截] 玩家试图在第 ${gameState.turn} 回合重复修炼，已成功阻止。`);
+            return;
+        }
 
         // 1. 确保已学会列表存在
         if (!p.ownedMethods) p.ownedMethods = [];
@@ -9538,7 +9812,31 @@ practice: function() {
             return;
         }
 
-        // 6. 渲染 UI (新增了【切换功法】按钮)
+        // 3. 【核心重构】直接精准写入“仙途手札”数据轨，限制最近50条
+        if (!gameState.world) gameState.world = {};
+        if (!gameState.world.logs) gameState.world.logs = [];
+
+        // 获取本次修炼预估增加的基础修为值
+        const baseExpGained = p.method.baseExpPerTick || 10;
+        
+        // 压入修仙手札日志轨
+        gameState.world.logs.unshift({
+            turn: gameState.turn || 1,
+            text: `【仙途手札】第 ${gameState.turn || 1} 年，道友于灵台静坐，全力运转《${p.method.name}》，神魂契合，修为稳步精进。`
+        });
+
+        // 严格限制最近50条数据轨，防止因果过载导致游戏卡顿
+        if (gameState.world.logs.length > 50) {
+            gameState.world.logs = gameState.world.logs.slice(0, 50);
+        }
+
+        // 控制台逻辑探针监控
+        console.log(`%c✨ [修仙手札探针] 回合 ${gameState.turn}：成功写入修炼轨道，当前手札总数：${gameState.world.logs.length}/50`, "color: #10b981; font-weight: bold;");
+
+        // 标记当前回合已修炼，锁死额度
+        p.hasCultivatedThisTurn = true;
+
+        // 6. 渲染 UI (保持原有功能、原有样式与小游戏互动 100% 相同)
         const methodRate = Math.floor(p.method.speed * 100);
         const html = `
             <div style="text-align:center; user-select:none;">
@@ -12039,7 +12337,7 @@ openAppearance: function() {
       const slotTags = {
             clothing: ["袍", "衣", "铠", "甲", "裙", "裳", "斗篷", "装", "衫"],
             headwear: ["簪", "冠", "发", "盔", "巾", "箍", "带", "面纱", "抹额", "环"],
-            artifact: ["剑", "扇", "杖", "法器", "镜", "钟", "鼎", "锥", "刀", "令", "笛", "印"],
+            artifact: ["剑", "扇", "杖", "法器", "镜", "钟", "鼎", "锥", "刀", "令", "笛", "尺", "印"],
             bracelet: ["镯", "链", "环", "腕", "串", "扣", "带", "镣铐"],
             accessory: ["坠", "饰", "珠", "佩", "囊", "玉简", "笛", "印", "瓶", "书"],
             shoes: ["履", "靴", "鞋", "足", "行", "踏"]
@@ -12085,6 +12383,8 @@ openAppearance: function() {
         openModal("挑选装束", html);
     },
 confirmEquipAppearance: function(slotKey, itemName) {
+    const tStart = performance.now();
+    
     // 探针检测：前置验证初始化状态，防止引发空指针崩毁
     if (!gameState || !gameState.player || !Array.isArray(gameState.player.bag)) {
         console.error("%c❌ [天机探针] 异常：游戏角色或背包数据未初始化！", "color: #ef4444; font-weight: bold;");
@@ -12095,13 +12395,16 @@ confirmEquipAppearance: function(slotKey, itemName) {
     const p = gameState.player;
     console.log(`%c🔍 [天机探针] 正在为槽位 [${slotKey}] 检索背包中的仪容圣物: ${itemName}...`, "color: #3b82f6;");
 
-    // 1. 属性探针精准查找：完美兼容 stats 与 baseStats 两种键名命名格式
-    const itemInBag = p.bag.find(i => i.name === itemName && (i.stats || i.baseStats));
+    // 1. 宽容度属性探针查找：优先匹配带有 stats/baseStats 的物品；若无，只要名字相同也允许匹配（解决拍卖获得神兵穿戴失败问题）
+    let itemInBag = p.bag.find(i => i.name === itemName && (i.stats || i.baseStats));
+    if (!itemInBag) {
+        itemInBag = p.bag.find(i => i.name === itemName);
+    }
     
     if (!itemInBag) {
-        console.warn(`%c⚠️ [天机探针] 检索失败：背包中虽有同名物，但均未包含有效的法能属性 (stats/baseStats)。`, "color: #eab308;");
+        console.warn(`%c⚠️ [天机探针] 检索失败：背包中查无此物【${itemName}】。`, "color: #eab308;");
         if (typeof Utils !== 'undefined' && Utils.toast) {
-            Utils.toast("未找到该装备的属性数据");
+            Utils.toast(`背包中未找到【${itemName}】`);
         }
         return;
     }
@@ -12114,20 +12417,50 @@ confirmEquipAppearance: function(slotKey, itemName) {
     
     console.log(`%c✨ [天机探针] 成功将 [${itemName}] 烙印至仪容槽位 [${slotKey}]。`, "color: #10b981; font-weight: bold;");
 
-    // 3. 【探针核心】实时属性重算引擎与契约功法刷新
+    // 3. 【核心重构】直接精准写入“仙途手札”数据轨，限制最近50条
+    if (!gameState.world) gameState.world = {};
+    if (!gameState.world.logs) gameState.world.logs = [];
+    
+    gameState.world.logs.unshift({
+        turn: gameState.turn || 1,
+        text: `【法宝御器】道友将背包中的【${itemName}】装备至【${slotKey}】仪容槽位，周身法运随之流转。`
+    });
+    if (gameState.world.logs.length > 50) {
+        gameState.world.logs = gameState.world.logs.slice(0, 50);
+    }
+
+    // --- 联动机制：自动识别穿戴法宝，玩家当即顿悟并于战斗中使用功法 ---
+    if (!p.skills) p.skills = [];
+    // 寻找 CONFIG.manuals 中是否有关联此法宝名称的契约功法
+    const matchedSkillId = Object.keys(CONFIG.manuals).find(k => {
+        const m = CONFIG.manuals[k];
+        return m.isArtifact && (m.artifactName === itemName || k === itemName);
+    });
+
+    if (matchedSkillId && !p.skills.includes(matchedSkillId)) {
+        p.skills.push(matchedSkillId);
+        console.log(`%c🔥 [契约通灵探针] 道友穿戴【${itemName}】触发宿世因果，自动掌握神技：【${CONFIG.manuals[matchedSkillId].skill.name}】！可在战斗中直接释放。`, "color: #ff9800; font-weight: bold;");
+        if (typeof Utils !== 'undefined' && Utils.toast) {
+            Utils.toast(`通灵契约成功：习得【${CONFIG.manuals[matchedSkillId].skill.name}】`);
+        }
+    }
+
+    // 4. 实时属性重算引擎
     if (typeof this.recalculateAppearanceBonus === 'function') {
         this.recalculateAppearanceBonus();
     } else {
         console.warn("%c⚠️ [天机探针] 未检出 recalculateAppearanceBonus 重算引擎，跳过属性重构。", "color: #eab308;");
     }
 
-    // 4. 刷新全部界面与因果通知
+    // 5. 刷新全部界面与因果通知
     if (typeof this.updateUI_Self === 'function') this.updateUI_Self();
     if (typeof this.openAppearance === 'function') this.openAppearance(); 
     
     if (typeof Utils !== 'undefined' && Utils.toast) {
         Utils.toast(`[${itemName}] 穿戴成功，因果加持中...`);
     }
+
+    console.log(`%c[仪容穿戴探针] 穿戴与手札重构执行耗时: ${(performance.now() - tStart).toFixed(2)}ms`, "color: #2ecc71;");
 },
 recalculateAppearanceBonus: function() {
     const p = gameState.player;
@@ -15838,8 +16171,16 @@ openBlackMarket: function() {
     const p = gameState.player;
     if (!this.myStall) this.myStall = [];
 
+    // 3. 【核心重构】直接精准写入“仙途手札”数据轨，限制最近50条
+    if (!gameState.world) gameState.world = {};
+    if (!gameState.world.logs) gameState.world.logs = [];
+
     console.log("%c[仙姿黑市] 玲珑雅阁已开张，静候有缘人...", "color: #ff75a0; font-weight: bold;");
     
+    // 判断当前回合是否已经释放过灵香 (使用全局回合数锁定，保证一回合仅能引客一次)
+    const currentTurn = gameState.turn || 1;
+    const hasAttractedThisTurn = this._lastAttractTurn === currentTurn;
+
     let html = `
     <style>
         @keyframes drift { from { transform: translateX(-50px) opacity(0); } to { transform: translateX(400px) opacity(0); } }
@@ -15885,8 +16226,12 @@ openBlackMarket: function() {
 
     html += `</div>
         <div style="margin-top:20px; text-align:center; position:relative; z-index:2; display:flex; gap:12px;">
-            <button class="btn-palace" onclick="closeModal()" style="flex:1; background:#f5f5f5; color:#78909c; border:none; border-radius:12px; padding:10px;">暂退</button>
-            <button class="btn-palace" onclick="game.startBlackMarketSim()" style="flex:2; background:linear-gradient(135deg, #f48fb1 0%, #ec407a 100%); color:#fff; border:none; border-radius:12px; padding:10px; font-weight:bold; box-shadow: 0 4px 10px rgba(236,64,122,0.3);">✨ 释放灵香引客</button>
+            <button class="btn-palace" onclick="closeModal()" style="flex:1; background:#f5f5f5; color:#78909c; border:none; border-radius:12px; padding:10px; cursor:pointer;">暂退</button>
+            ${hasAttractedThisTurn ? `
+                <button class="btn-palace" style="flex:2; background:#b0bec5; color:#ffffff; border:none; border-radius:12px; padding:10px; font-weight:bold; cursor:not-allowed;" disabled>⏳ 本回合灵香已燃尽</button>
+            ` : `
+                <button class="btn-palace" onclick="if(typeof game !== 'undefined'){ game._lastAttractTurn = gameState.turn || 1; }; game.startBlackMarketSim();" style="flex:2; background:linear-gradient(135deg, #f48fb1 0%, #ec407a 100%); color:#fff; border:none; border-radius:12px; padding:10px; font-weight:bold; box-shadow: 0 4px 10px rgba(236,64,122,0.3); cursor:pointer;">✨ 释放灵香引客</button>
+            `}
         </div>
     </div>`;
     openModal("🌸 仙姿·黑市雅阁", html);
@@ -16069,7 +16414,7 @@ let totalBasePrice = 0;
   
 const buyerTypes = [
     // --- 1. 豪横大方类 (Generous) - 玩家的财神爷 ---
-    { n: "合欢宗圣女", p: "极其豪爽，只要东西漂亮或合眼缘，双倍价格也面不改色", mood: "generous" },
+    { n: "合欢宗圣主", p: "极其豪爽，只要东西漂亮或合眼缘，双倍价格也面不改色", mood: "generous" },
     { n: "万宝阁少东家", p: "财大气粗，视灵石为粪土，出价极高但没耐心，拒绝还价", mood: "generous" },
     { n: "暴发户矿主", p: "土味十足，就喜欢贵的东西，越贵越觉得有面子", mood: "generous" },
     { n: "渡劫归来的大佬", p: "随缘买卖，心情好时会随手扔下一堆灵石", mood: "generous" },
@@ -16752,6 +17097,19 @@ checkBag: function() {
     const p = gameState.player;
     if (!p.bag) p.bag = [];
 
+    // 3. 【核心重构】直接精准写入“仙途手札”数据轨，限制最近50条
+    if (!gameState.world) gameState.world = {};
+    if (!gameState.world.logs) gameState.world.logs = [];
+    
+    // 记录道友查看储物袋之天道行为
+    gameState.world.logs.unshift({ 
+        turn: gameState.turn || 1, 
+        text: `【神识内视】道友打开了储物袋，清点周身法宝及修仙资粮。` 
+    });
+    if (gameState.world.logs.length > 50) {
+        gameState.world.logs = gameState.world.logs.slice(0, 50);
+    }
+
     // --- 核心：渲染框架（Tab + 搜索框） ---
     let html = `
     <div style="background:#fcf9f2; padding:10px; border-radius:12px;">
@@ -16787,6 +17145,89 @@ checkBag: function() {
     `;
 
     openModal("📦 储物袋", html);
+    
+    // --- 核心注入：动态挂载支持 CRAFT_RECIPES 法器映射的智能过滤渲染器 ---
+    this._filterBagDisplay = function() {
+        const searchKey = document.getElementById('bag-search') ? document.getElementById('bag-search').value.trim() : "";
+        const activeTabBtn = document.querySelector('.bag-tab.active');
+        const currentTab = activeTabBtn ? activeTabBtn.innerText : "全部";
+        const container = document.getElementById('bag-items-container');
+        if (!container) return;
+
+        let filteredItems = p.bag.filter(item => {
+            // 搜索词过滤
+            if (searchKey && !item.name.includes(searchKey) && !(item.desc && item.desc.includes(searchKey))) {
+                return false;
+            }
+            if (currentTab === "全部") return true;
+
+            // 核心修复逻辑：提取物品类型，并动态反查 CRAFT_RECIPES 配置库
+            let itemType = item.type || "";
+            
+            // 检查配方库中是否有对应的法宝数据映射
+            if (typeof CRAFT_RECIPES !== 'undefined') {
+                // 通过名称或者原始Key反查对应的配方条目
+                const matchedRecipe = Object.values(CRAFT_RECIPES).find(r => r.name === item.name);
+                if (matchedRecipe) {
+                    // 如果配方里定义为：法器、衣着、饰品、防具，则全部统一归类至“法器法宝”标签
+                    if (["法器", "衣着", "饰品", "防具"].includes(matchedRecipe.type)) {
+                        itemType = "法器法宝";
+                    }
+                }
+            }
+
+            // 标签严格映射匹配
+            if (currentTab === "功法秘籍" && itemType === "功法秘籍") return true;
+            if (currentTab === "人用丹药" && (itemType === "人用丹药" || itemType === "丹药")) return true;
+            if (currentTab === "兽用丹药" && itemType === "兽用丹药") return true;
+            if (currentTab === "灵草药材" && (itemType === "灵草药材" || itemType === "药材")) return true;
+            if (currentTab === "法器法宝" && (itemType === "法器法宝" || itemType === "法器" || itemType === "装备")) return true;
+            if (currentTab === "怪物资源" && itemType === "怪物资源") return true;
+
+            return false;
+        });
+
+        if (filteredItems.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:#999; padding:40px 10px; font-size:13px;">储物袋内空空如也...</div>`;
+            return;
+        }
+
+        // 高性能拼装格位 HTML
+        let itemsHtml = `<div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;">`;
+        filteredItems.forEach(item => {
+            itemsHtml += `
+            <div style="background:#fff; border:1px solid #f1e5c8; padding:10px; border-radius:10px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 5px rgba(0,0,0,0.02);">
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <div style="font-size:22px;">${item.icon || "📦"}</div>
+                    <div style="text-align:left;">
+                        <div style="font-size:13px; font-weight:bold; color:#333;">${item.name}</div>
+                        <div style="font-size:11px; color:#b8860b;">数量: ${item.count || 1}</div>
+                    </div>
+                </div>
+                <div style="font-size:11px; color:#777; text-align:left; margin-top:6px; line-height:1.3; border-top:1px dashed #f1e5c8; padding-top:4px;">
+                    ${item.desc || "此物内含淡淡灵气。"}
+                </div>
+            </div>`;
+        });
+        itemsHtml += `</div>`;
+        container.innerHTML = itemsHtml;
+    };
+
+    // 动态挂载标签切换处理机制
+    this._switchBagTab = function(tabName, btnElement) {
+        document.querySelectorAll('.bag-tab').forEach(b => {
+            b.style.background = "#eee";
+            b.style.color = "#666";
+            b.style.boxShadow = "none";
+            b.classList.remove('active');
+        });
+        btnElement.style.background = "#d4af37";
+        btnElement.style.color = "white";
+        btnElement.style.boxShadow = "0 2px 4px rgba(212,175,55,0.2)";
+        btnElement.classList.add('active');
+        this._filterBagDisplay();
+    };
+
     // --- 脚本嵌入：实现PC端鼠标左右拖拽滑动 ---
     setTimeout(() => {
         const slider = document.getElementById('bag-tab-container');
@@ -16803,15 +17244,16 @@ checkBag: function() {
             if (!isDown) return;
             e.preventDefault();
             const x = e.pageX - slider.offsetLeft;
-            const walk = (x - startX) * 2; // 滑动速度倍率
+            const walk = (x - startX) * 2;
             slider.scrollLeft = scrollLeft - walk;
         });
         console.log("%c[滑动探针] 标签栏拖拽交互已就绪", "color: #3498db;");
     }, 50);
-    // 记录探针：框架构建完成
-    console.log(`%c[储物袋探针] 框架初始化耗时: ${(performance.now() - tStart).toFixed(2)}ms`, "color: #d4af37;");
 
-    // 默认触发一次全量渲染
+    // 记录探针：框架构建完成
+    console.log(`%c[储物袋探针] 框架初始化及库表比对耗时: ${(performance.now() - tStart).toFixed(2)}ms`, "color: #d4af37;");
+
+    // 默认触发全量动态计算渲染
     this._filterBagDisplay();
 },
 // --- 支撑搜索与分类的逻辑（建议放在 checkBag 下方） ---
@@ -20291,7 +20733,7 @@ showNPCDetail: function(npcId) {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px dashed #e6c280; padding-top: 14px;">
                     <button class="btn-palace btn-blue" style="cursor:pointer; border-radius:10px; padding: 9px; font-weight:bold; background:#70a1ff; color:#fff; border:none;" onclick="game.executeInnerHaremAction('${npc.id}', 'harem_talk')">💬 端水安抚</button>
                     <button class="btn-palace btn-gold" style="cursor:pointer; border-radius:10px; padding: 9px; font-weight:bold; background:#ffa502; color:#fff; border:none;" onclick="game.executeInnerHaremAction('${npc.id}', 'harem_gift')">🎁 赏赐灵宝</button>
-                    <button class="btn-palace" style="cursor:pointer; border-radius:10px; padding: 9px; font-weight:bold; background: linear-gradient(135deg, #a55eea, #4b7bec); color:#fff; border:none;" onclick="game.executeInnerHaremAction('${npc.id}', 'harem_array')">🔮 阵法共鸣</button>
+                    <button class="btn-palace" style="cursor:pointer; border-radius:10px; padding: 9px; font-weight:bold; background: linear-gradient(135deg, #a55eea, #4b7bec); color:#fff; border:none;" onclick="game.executeInnerHaremAction('${npc.id}', 'harem_array')">🔮 阵法共鸣（玩法没想好欢迎投稿）</button>
                     <button class="btn-palace" style="background:linear-gradient(135deg, #ff4757, #ff6b81); color:#fff; cursor:pointer; border-radius:10px; padding: 9px; border:none; font-weight:bold; box-shadow:0 2px 4px rgba(214,90,104,0.2);" onclick="game.executeInnerHaremAction('${npc.id}', 'harem_dual')">💕 鸾凤交泰</button>
                     <button class="btn-palace" style="grid-column: span 2; background: linear-gradient(135deg, #57606f, #2f3542); color: #fff; margin-top: 4px; border: 1px solid #747d8c; cursor: pointer;" onclick="if(confirm('🚨 确定要对其施展【太上忘情断缘诀】吗？\\n此举将把【${npc.name}】彻底移出内府并斩断尘缘羁绊。')){ ${globalThis._xiuxianSocialHostPath || 'game'}.executeInnerHaremAction('${npc.id}', 'harem_breakup') }">💔 施展太上忘情诀 (断缘分手)</button>
                 </div>
@@ -22421,9 +22863,52 @@ _renderShopItemUI: function(item, canAfford, type) {
         const pool = isSuccess ? successPool : failPool;
         return pool[Math.floor(Math.random() * pool.length)];
     },
-// 【修改】查看已学功法/技能 - 自动识别并汉化法器功法书名
 checkSkills: function() {
+    const tStart = performance.now();
     const p = gameState.player;
+    if (!p.skills) p.skills = [];
+
+    // 3. 【核心重构】直接精准写入“仙途手札”数据轨，限制最近50条
+    if (!gameState.world) gameState.world = {};
+    if (!gameState.world.logs) gameState.world.logs = [];
+    
+    gameState.world.logs.unshift({ 
+        turn: gameState.turn || 1, 
+        text: `【识海内观】道友调动元神神识，审阅自身所习得的诸般通天功法秘术。` 
+    });
+    if (gameState.world.logs.length > 50) {
+        gameState.world.logs = gameState.world.logs.slice(0, 50);
+    }
+
+    // --- 核心机制注入：检测当前穿戴的法器，实现“穿戴即自动学会功法”的判定 ---
+    if (p.appearance && p.appearance.slots) {
+        // 扫描所有已装备的槽位（如：artifact 本命法器，或者其他装备槽）
+        for (let slotKey in p.appearance.slots) {
+            const equippedItem = p.appearance.slots[slotKey];
+            if (equippedItem && equippedItem.name) {
+                // 在 CONFIG.manuals 中寻找是否有名为该装备、或者是法器契约专属的功法键
+                // 支持直接用物品名、或者物品关联配置反查
+                let matchedSkillId = null;
+                
+                if (CONFIG.manuals[equippedItem.name]) {
+                    matchedSkillId = equippedItem.name;
+                } else {
+                    // 遍历寻找具备 isArtifact 且名称匹配的法宝心法键名
+                    matchedSkillId = Object.keys(CONFIG.manuals).find(k => {
+                        const m = CONFIG.manuals[k];
+                        return m.isArtifact && (m.artifactName === equippedItem.name || k === equippedItem.name);
+                    });
+                }
+
+                // 如果找到了法器对应心法，且玩家尚未学会，则立刻因果绑定，自动习得！
+                if (matchedSkillId && !p.skills.includes(matchedSkillId)) {
+                    p.skills.push(matchedSkillId);
+                    console.log(`%c[法器契约探针] 检测到道友正穿戴【${equippedItem.name}】，已自动融汇贯通并解锁绝技：【${CONFIG.manuals[matchedSkillId].skill.name}】`, "color: #ff9800; font-weight: bold;");
+                }
+            }
+        }
+    }
+
     let html = '';
 
     // 1. 检查是否为空
@@ -22438,43 +22923,42 @@ checkSkills: function() {
     } else {
         // 2. 遍历并显示已学技能
         html += `<div style="text-align:left;">`;
-        html += `<div style="font-size:12px; color:#666; margin-bottom:10px; text-align:center;">已掌握秘籍：<span style="color:#d4af37; font-weight:bold;">${p.skills.length}</span> 本</div>`;
+        html += `<div style="font-size:12px; color:#666; margin-bottom:10px; text-align:center;">已掌握秘籍/法宝通灵：<span style="color:#d4af37; font-weight:bold;">${p.skills.length}</span> 本</div>`;
         
         p.skills.forEach(skillId => {
-            // --- 核心修改部分：功法识别与名字重构 ---
-            // 首先尝试从 CONFIG.manuals (修炼系统) 匹配
+            // 首先尝试从 CONFIG.manuals (修炼与法器契约系统) 匹配
             const methodConfig = CONFIG.manuals[skillId];
-            // 如果找不到，则回退到 CONFIG.libraryBooks (图书馆系统) 匹配
+            // 如果找不到，则回退到 CONFIG.libraryBooks (藏经阁系统) 匹配
             const book = methodConfig ? null : (CONFIG.libraryBooks ? CONFIG.libraryBooks.find(b => b.id === skillId || b.name === skillId) : null);
 
             if (methodConfig) {
-                // 情况 A：这是你练满 100% 的功法（含自动绑定的法器功法）
                 const skill = methodConfig.skill;
                 
                 // 【动态名字映射】：如果是法器契约，取 artifactName，否则取原 skillId 键名
                 const displayName = methodConfig.isArtifact && methodConfig.artifactName ? methodConfig.artifactName : skillId;
                 // 【动态标签】：普通功法显示“功法”，法器功法显示“法器”
-                const tagText = methodConfig.isArtifact ? "法器" : "功法";
+                const tagText = methodConfig.isArtifact ? "法器通灵" : "功法圆满";
                 const tagBgColor = methodConfig.isArtifact ? "#ff98001a" : "#d4af371a";
                 const tagColor = methodConfig.isArtifact ? "#ff9800" : "#d4af37";
 
                 html += `
-                <div class="list-row" style="padding:12px; border-bottom:1px dashed #eee; background: rgba(212, 175, 55, 0.05);">
+                <div class="list-row" style="padding:12px; border-bottom:1px dashed #eee; background: rgba(212, 175, 55, 0.05); margin-bottom: 6px; border-radius: 8px;">
                     <div style="flex:1;">
-                        <div style="font-weight:bold; color:#2c3e50; display:flex; align-items:center;">
-                            《${displayName}》 
-                            <span style="font-size:10px; background:#2196f31a; color:#2196f3; padding:1px 4px; border-radius:4px; margin-left:6px;">大圆满</span>
-                            <span style="font-size:10px; background:${tagBgColor}; color:${tagColor}; padding:1px 4px; border-radius:4px; margin-left:4px;">${tagText}</span>
+                        <div style="font-weight:bold; color:#2c3e50; display:flex; align-items:center; justify-content:space-between;">
+                            <span>《${displayName}》</span>
+                            <div>
+                                <span style="font-size:10px; background:#2196f31a; color:#2196f3; padding:1px 4px; border-radius:4px;">大圆满</span>
+                                <span style="font-size:10px; background:${tagBgColor}; color:${tagColor}; padding:1px 4px; border-radius:4px; margin-left:4px;">${tagText}</span>
+                            </div>
                         </div>
-                        <div style="font-size:11px; color:#888; margin:4px 0;">${methodConfig.desc}</div>
-                        <div style="font-size:11px; color:#d35400; background:#fff3e0; display:inline-block; padding:4px 8px; border-radius:4px; border:1px solid #ffeaa7; margin-top:4px;">
-                            💥 领悟技能：<strong>【${skill.name}】</strong> <br>
-                            基础伤害: <span style="color:#c0392b;">${skill.d}</span> | 灵力消耗: <span style="color:#2980b9;">${skill.mp}</span>
+                        <div style="font-size:11px; color:#888; margin:4px 0; line-height:1.4;">${methodConfig.desc}</div>
+                        <div style="font-size:11px; color:#d35400; background:#fff3e0; display:block; padding:6px 10px; border-radius:4px; border:1px solid #ffeaa7; margin-top:4px;">
+                            💥 战斗可释放神技：<strong>【${skill.name}】</strong> <br>
+                            <span style="margin-top:2px; display:inline-block;">基础伤害: <span style="color:#c0392b; font-weight:bold;">${skill.d}</span> | 灵力消耗: <span style="color:#2980b9; font-weight:bold;">${skill.mp}</span></span>
                         </div>
                     </div>
                 </div>`;
             } else if (book) {
-                // 情况 B：这是原本就有的其他类型书籍（保留原来的逻辑）
                 let typeTag = "";
                 let typeColor = "#666";
                 if(book.type === 'method') { typeTag = "功法"; typeColor = "#2196f3"; }
@@ -22488,11 +22972,11 @@ checkSkills: function() {
                 }
 
                 html += `
-                <div class="list-row" style="padding:12px; border-bottom:1px dashed #eee;">
+                <div class="list-row" style="padding:12px; border-bottom:1px dashed #eee; margin-bottom: 6px; border-radius: 8px;">
                     <div style="flex:1;">
-                        <div style="font-weight:bold; color:#2c3e50; display:flex; align-items:center;">
-                            ${book.name} 
-                            <span style="font-size:10px; background:${typeColor}1a; color:${typeColor}; padding:1px 4px; border-radius:4px; margin-left:6px;">${typeTag}</span>
+                        <div style="font-weight:bold; color:#2c3e50; display:flex; align-items:center; justify-content:space-between;">
+                            <span>${book.name}</span>
+                            <span style="font-size:10px; background:${typeColor}1a; color:${typeColor}; padding:1px 4px; border-radius:4px;">${typeTag}</span>
                         </div>
                         <div style="font-size:11px; color:#888; margin:4px 0;">${book.desc}</div>
                         <div style="font-size:11px; color:#2ecc71; background:#e8f5e9; display:inline-block; padding:2px 6px; border-radius:4px;">
@@ -22501,12 +22985,14 @@ checkSkills: function() {
                     </div>
                 </div>`;
             }
-            // --- 修改结束 ---
         });
         html += `</div>`;
     }
 
     openModal("📖 已修功法", html);
+    
+    // 耗时监控探针
+    console.log(`%c[功法识海探针] 自动检索及穿戴功法刷新耗时: ${(performance.now() - tStart).toFixed(2)}ms`, "color: #2ecc71;");
 },
 openTalismanBag: function() {
     const p = gameState.player;
@@ -23951,7 +24437,7 @@ updateUI_Self: function() {
                         <span>报告</span>
                         <div id="child-report-dot" style="display:none; position:absolute; top:2px; right:14px; width:9px; height:9px; background-color:#ff4d4f; border-radius:50%; border:2px solid #fff; z-index:100;"></div>
                     </div>
-                    <div class="menu-item" onclick="if(typeof game!=='undefined'&&game.openFightMenu){game.openFightMenu()}else{openModal('🥬 菜园', '敬请期待（我要做偷菜还没做完）')}"><div class="icon-box blue"><i class="fas fa-khanda"></i></div><span>切磋</span></div>
+                    <div class="menu-item" onclick="if(typeof game!=='undefined'&&game.openFightMenu){game.openFightMenu()}else{openModal('🥬 菜园', '敬请期待（我要做偷菜还没做完）')}"><div class="icon-box blue"><i class="fas fa-seedling"></i></div><span>菜园</span></div>
                 </div>
             </div>
             <div id="ui-home-nursery-panel"></div>
@@ -30019,148 +30505,149 @@ openNpcChatWindow: function(npc, currentFavor, dynamicOverride = "") {
         if (typeof this.renderNpcBattleUI === 'function') this.renderNpcBattleUI();
     },
 renderNpcBattleUI: function(isVersusMode = true) {
-    const b = this.currentNpcBattle;
-    if (!b) {
-        console.warn("❌ [演武交互探针] 未发现当前演武实例，渲染终止。");
-        return;
-    }
+        const b = this.currentNpcBattle;
+        if (!b) {
+            console.warn("❌ [演武交互探针] 未发现当前演武实例，渲染终止。");
+            return;
+        }
 
-    const npc = b.npc;
-    const p = (typeof gameState !== 'undefined' && gameState.player) || { 
-        battle: {}, 
-        avatar: 'https://via.placeholder.com/64', 
-        name: '道友', 
-        levelName: '凡人' 
-    };
-    
-    const npcHpPer = Math.max(0, (b.npcHp / b.npcMaxHp) * 100);
-    const pHpPer = Math.max(0, (b.playerHp / b.playerMaxHp) * 100);
-    const pMpPer = Math.max(0, (b.playerMp / b.playerMaxMp) * 100);
-
-    const activePet = (p.battle && p.battle.pets) ? p.battle.pets.find(pet => pet.loyalty >= 80 && pet.state !== "生病") : null;
-    const sickPet = (p.battle && p.battle.pets) ? p.battle.pets.find(pet => pet.state === "生病") : null;
-
-    // 🔥 【核心修复】在全局环境明确标识当前为演武切磋战局，切断重叠变量
-    if (typeof game !== 'undefined') {
-        game._lastBattleContext = 'duel'; 
-    }
-
-    console.log(
-        `%c⚡ [演武运行时探针] 界面刷新 | 模式: ${isVersusMode ? '双头像' : '单头像'} | 玩家气血: ${Math.floor(b.playerHp)}/${b.playerMaxHp} | 对手 [${npc.name}] 真元: ${Math.ceil(b.npcHp)}/${b.npcMaxHp}`,
-        "color: #dca842; font-weight: bold; background: #fffde8; padding: 3px 8px; border-radius: 4px;"
-    );
-
-    let html = "";
-
-    if (isVersusMode) {
-        html = `
-        <style>
-            .battle-card-cheese { font-family: '楷体', serif; position:relative; background: #fffde8; border-radius: 20px; padding: 5px; }
-            .cheese-vs-container { display: flex; align-items: center; justify-content: space-between; background: #fdf6dc; border: 2px solid #f4e6b6; border-radius: 16px; padding: 15px; box-shadow: inset 0 0 10px rgba(220,168,66,0.05); }
-            .cheese-avatar-box { display: flex; flex-direction: column; align-items: center; width: 40%; }
-            .cheese-avatar { width: 64px; height: 64px; border-radius: 18px; border: 3px solid #dca842; box-shadow: 0 4px 10px rgba(220,168,66,0.15); object-fit: cover; background: #fff; }
-            .cheese-name { font-weight: bold; margin-top: 6px; font-size: 15px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
-            .cheese-vs-badge { font-size: 22px; font-weight: 900; color: #dca842; font-style: italic; text-shadow: 1px 1px 0px #fff; animation: cheese-pulse 1.5s infinite; }
-            .battle-stat-label { display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px; font-weight:bold; }
-            .battle-bar-bg { width:100%; height:10px; background:#ebdcb0; border-radius:5px; overflow:hidden; border:1px solid rgba(0,0,0,0.03); }
-            .pet-assist-tag { font-size:10px; background:#dca842; color:white; padding:1px 5px; border-radius:4px; margin-left:3px; display: inline-block; animation: pulse-duel 2s infinite; }
-            .btn-cheese-action {
-                border: 2px solid #f4e6b6; background: linear-gradient(to bottom, #ffffff, #fffde8); color: #705315;
-                padding: 10px 5px; border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.2s;
-                text-align: center; box-shadow: 0 3px 6px rgba(220,168,66,0.08);
-            }
-            .btn-cheese-action:hover { background: #fffac2; border-color: #dca842; transform: translateY(-1px); box-shadow: 0 5px 10px rgba(220,168,66,0.15); }
-            .btn-cheese-action:active { transform: translateY(1px); }
-            @keyframes pulse-duel { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
-            @keyframes cheese-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        </style>
+        const npc = b.npc;
+        const p = (typeof gameState !== 'undefined' && gameState.player) || { 
+            battle: {}, 
+            avatar: 'https://via.placeholder.com/64', 
+            name: '道友', 
+            levelName: '凡人' 
+        };
         
-        <div class="battle-card-cheese" data-battle-type="pvp">
-            <div style="position:absolute; left:50%; top:45%; transform:translate(-50%, -50%); font-size:140px; color:rgba(220,168,66,0.03); pointer-events:none; z-index:0;">🥋</div>
+        const npcHpPer = Math.max(0, (b.npcHp / b.npcMaxHp) * 100);
+        const pHpPer = Math.max(0, (b.playerHp / b.playerMaxHp) * 100);
+        const pMpPer = Math.max(0, (b.playerMp / b.playerMaxMp) * 100);
+
+        const activePet = (p.battle && p.battle.pets) ? p.battle.pets.find(pet => pet.loyalty >= 80 && pet.state !== "生病") : null;
+        const sickPet = (p.battle && p.battle.pets) ? p.battle.pets.find(pet => pet.state === "生病") : null;
+
+        // 🔥 【核心修复】在全局环境明确标识当前为演武切磋战局，切断重叠变量
+        if (typeof game !== 'undefined') {
+            game._lastBattleContext = 'duel'; 
+        }
+
+        console.log(
+            `%c⚡ [演武运行时探针] 界面刷新 | 模式: ${isVersusMode ? '双头像' : '单头像'} | 玩家气血: ${Math.floor(b.playerHp)}/${b.playerMaxHp} | 对手 [${npc.name}] 真元: ${Math.ceil(b.npcHp)}/${b.npcMaxHp}`,
+            "color: #dca842; font-weight: bold; background: #fffde8; padding: 3px 8px; border-radius: 4px;"
+        );
+
+        let html = "";
+
+        if (isVersusMode) {
+            html = `
+            <style>
+                .battle-card-cheese { font-family: '楷体', serif; position:relative; background: #fffde8; border-radius: 20px; padding: 5px; }
+                .cheese-vs-container { display: flex; align-items: center; justify-content: space-between; background: #fdf6dc; border: 2px solid #f4e6b6; border-radius: 16px; padding: 15px; box-shadow: inset 0 0 10px rgba(220,168,66,0.05); }
+                .cheese-avatar-box { display: flex; flex-direction: column; align-items: center; width: 40%; }
+                .cheese-avatar { width: 64px; height: 64px; border-radius: 18px; border: 3px solid #dca842; box-shadow: 0 4px 10px rgba(220,168,66,0.15); object-fit: cover; background: #fff; }
+                .cheese-name { font-weight: bold; margin-top: 6px; font-size: 15px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+                .cheese-vs-badge { font-size: 22px; font-weight: 900; color: #dca842; font-style: italic; text-shadow: 1px 1px 0px #fff; animation: cheese-pulse 1.5s infinite; }
+                .battle-stat-label { display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px; font-weight:bold; }
+                .battle-bar-bg { width:100%; height:10px; background:#ebdcb0; border-radius:5px; overflow:hidden; border:1px solid rgba(0,0,0,0.03); }
+                .pet-assist-tag { font-size:10px; background:#dca842; color:white; padding:1px 5px; border-radius:4px; margin-left:3px; display: inline-block; animation: pulse-duel 2s infinite; }
+                .btn-cheese-action {
+                    border: 2px solid #f4e6b6; background: linear-gradient(to bottom, #ffffff, #fffde8); color: #705315;
+                    padding: 10px 5px; border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.2s;
+                    text-align: center; box-shadow: 0 3px 6px rgba(220,168,66,0.08);
+                }
+                .btn-cheese-action:hover { background: #fffac2; border-color: #dca842; transform: translateY(-1px); box-shadow: 0 5px 10px rgba(220,168,66,0.15); }
+                .btn-cheese-action:active { transform: translateY(1px); }
+                @keyframes pulse-duel { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
+                @keyframes cheese-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+            </style>
             
-            <div class="cheese-vs-container" style="position:relative; z-index:1;">
-                <div class="cheese-avatar-box">
-                    <img src="${p.avatar || 'https://via.placeholder.com/64'}" class="cheese-avatar" style="border-color: #5fa8e9;">
-                    <div class="cheese-name" style="color: #2c3e50;">${p.name || '你'}</div>
-                    <span style="font-size:11px; color:#7f8c8d;">(${p.levelName || '本尊'})</span>
+            <div class="battle-card-cheese" data-battle-type="pvp">
+                <div style="position:absolute; left:50%; top:45%; transform:translate(-50%, -50%); font-size:140px; color:rgba(220,168,66,0.03); pointer-events:none; z-index:0;">🥋</div>
+                
+                <div class="cheese-vs-container" style="position:relative; z-index:1;">
+                    <div class="cheese-avatar-box">
+                        <img src="${p.avatar || 'https://via.placeholder.com/64'}" class="cheese-avatar" style="border-color: #5fa8e9;">
+                        <div class="cheese-name" style="color: #2c3e50;">${p.name || '你'}</div>
+                        <span style="font-size:11px; color:#7f8c8d;">(${p.levelName || '本尊'})</span>
+                    </div>
+                    
+                    <div class="cheese-vs-badge">VS</div>
+                    
+                    <div class="cheese-avatar-box">
+                        <img src="${npc.avatar}" class="cheese-avatar" style="border-color: #e74c3c;">
+                        <div class="cheese-name" style="color: #b22222;">${npc.name}</div>
+                        <span style="font-size:11px; color:#7f8c8d;">(${npc.levelName})</span>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 10px 12px; border-radius: 14px; border: 1px solid #f4e6b6; margin-top: 12px; position:relative; z-index:1;">
+                    <div class="battle-stat-label" style="color:#b22222;">
+                        <span>💀 对手真元</span><span>${Math.ceil(b.npcHp)} / ${b.npcMaxHp}</span>
+                    </div>
+                    <div class="battle-bar-bg" style="background:#f9e4e4;"><div style="width:${npcHpPer}%; height:100%; background:linear-gradient(90deg, #ff7675, #e74c3c); transition:0.3s;"></div></div>
                 </div>
                 
-                <div class="cheese-vs-badge">VS</div>
+                <div id="duel-log-box" style="height:105px; overflow-y:auto; margin:12px 0; font-size:12px; color:#5d4037; background:rgba(255,255,255,0.85); padding:10px; border-radius:12px; border-left:4px solid #dca842; line-height:1.5; position:relative; z-index:1;">
+                    ${b.logs.map(l => `<div style="margin-bottom:4px; border-bottom:1px solid rgba(220,168,66,0.05);">🔸 ${l}</div>`).join('')}
+                </div>
+
+                <div style="background:white; padding:12px; border-radius:14px; border:1px solid #f4e6b6; display:flex; flex-direction:column; gap:8px; position:relative; z-index:1;">
+                    <div>
+                        <div class="battle-stat-label" style="color:#c0392b;">
+                            <span>❤ 自身气血 
+                                ${activePet ? `<span class="pet-assist-tag">🐾 ${activePet.name}助战</span>` : ''}
+                                ${(!activePet && sickPet) ? `<span style="font-size:10px; color:#e74c3c; margin-left:3px;">(⚠️ 有灵宠患病)</span>` : ''}
+                            </span>
+                            <span>${Math.floor(b.playerHp)} / ${b.playerMaxHp}</span>
+                        </div>
+                        <div class="battle-bar-bg" style="background:#fcdada;"><div style="width:${pHpPer}%; height:100%; background:linear-gradient(90deg, #ff7675, #d63031); transition:0.3s;"></div></div>
+                    </div>
+                    <div>
+                        <div class="battle-stat-label" style="color:#0984e3;">
+                            <span>✨ 储藏灵力</span><span>${Math.floor(b.playerMp)} / ${b.playerMaxMp}</span>
+                        </div>
+                        <div class="battle-bar-bg" style="background:#d6eafc;"><div style="width:${pMpPer}%; height:100%; background:linear-gradient(90deg, #74b9ff, #0984e3); transition:0.3s;"></div></div>
+                    </div>
+                </div>
                 
-                <div class="cheese-avatar-box">
-                    <img src="${npc.avatar}" class="cheese-avatar" style="border-color: #e74c3c;">
-                    <div class="cheese-name" style="color: #b22222;">${npc.name}</div>
-                    <span style="font-size:11px; color:#7f8c8d;">(${npc.levelName})</span>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; position:relative; z-index:1;">
+                    <button class="btn-cheese-action" style="border-color:#dca842; background:linear-gradient(to bottom, #fff6cc, #fffde8);" onclick="game.openBattleSkillSelector()">✨ 施展神通</button>
+                    <button class="btn-cheese-action" style="border-color:#b4e5a2;" onclick="game.doBattleAction('item')">💊 灵丹回血</button>
+                    <button class="btn-cheese-action" style="border-color:#f5cbb7;" onclick="game.openPetCaptureUI()">🐾 唤宠掠阵</button>
+                    <button class="btn-cheese-action" style="border-color:#cccccc; color:#7f8c8d;" onclick="console.log('🏳️ [演武交互探针] 玩家主动认输，切入战败结算轨...'); if(typeof game !== 'undefined' && game.handleBattleDefeat){ game.handleBattleDefeat(); }">🏳️ 收招认输</button>
                 </div>
             </div>
-
-            <div style="background: white; padding: 10px 12px; border-radius: 14px; border: 1px solid #f4e6b6; margin-top: 12px; position:relative; z-index:1;">
-                <div class="battle-stat-label" style="color:#b22222;">
-                    <span>💀 对手真元</span><span>${Math.ceil(b.npcHp)} / ${b.npcMaxHp}</span>
+            `;
+        } else {
+            html = `
+            <style>
+                .battle-stat-label { display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; font-weight:bold; }
+                .battle-bar-bg { width:100%; height:12px; background:#f0ebd5; border-radius:6px; overflow:hidden; border:1px solid rgba(212,172,13,0.15); }
+            </style>
+            <div class="battle-card-cheese" data-battle-type="pvp" style="font-family: '楷体', serif; background:#fefaf0; padding:15px; border-radius:15px;">
+                <div style="text-align:center; font-weight:bold; color:#7d6608; font-size:16px; margin-bottom:10px;">🥋 论道切磋：${npc.name}</div>
+                <div style="background: white; padding: 10px; border-radius: 10px; border: 1px solid #ebdcb0; margin-bottom:10px;">
+                    <div class="battle-stat-label" style="color:#b22222;"><span>💀 对手真元</span><span>${Math.ceil(b.npcHp)} / ${b.npcMaxHp}</span></div>
+                    <div class="battle-bar-bg"><div style="width:${npcHpPer}%; height:100%; background:#e74c3c;"></div></div>
                 </div>
-                <div class="battle-bar-bg" style="background:#f9e4e4;"><div style="width:${npcHpPer}%; height:100%; background:linear-gradient(90deg, #ff7675, #e74c3c); transition:0.3s;"></div></div>
-            </div>
-            
-            <div id="duel-log-box" style="height:105px; overflow-y:auto; margin:12px 0; font-size:12px; color:#5d4037; background:rgba(255,255,255,0.85); padding:10px; border-radius:12px; border-left:4px solid #dca842; line-height:1.5; position:relative; z-index:1;">
-                ${b.logs.map(l => `<div style="margin-bottom:4px; border-bottom:1px solid rgba(220,168,66,0.05);">🔸 ${l}</div>`).join('')}
-            </div>
-
-            <div style="background:white; padding:12px; border-radius:14px; border:1px solid #f4e6b6; display:flex; flex-direction:column; gap:8px; position:relative; z-index:1;">
-                <div>
-                    <div class="battle-stat-label" style="color:#c0392b;">
-                        <span>❤ 自身气血 
-                            ${activePet ? `<span class="pet-assist-tag">🐾 ${activePet.name}助战</span>` : ''}
-                            ${(!activePet && sickPet) ? `<span style="font-size:10px; color:#e74c3c; margin-left:3px;">(⚠️ 有灵宠患病)</span>` : ''}
-                        </span>
-                        <span>${Math.floor(b.playerHp)} / ${b.playerMaxHp}</span>
-                    </div>
-                    <div class="battle-bar-bg" style="background:#fcdada;"><div style="width:${pHpPer}%; height:100%; background:linear-gradient(90deg, #ff7675, #d63031); transition:0.3s;"></div></div>
+                <div id="duel-log-box" style="height:90px; overflow-y:auto; margin:10px 0; font-size:12px; background:#fff; padding:8px; border-radius:8px; border-left:3px solid #f1c40f;">
+                    ${b.logs.map(l => `<div>🔸 ${l}</div>`).join('')}
                 </div>
-                <div>
-                    <div class="battle-stat-label" style="color:#0984e3;">
-                        <span>✨ 储藏灵力</span><span>${Math.floor(b.playerMp)} / ${b.playerMaxMp}</span>
-                    </div>
-                    <div class="battle-bar-bg" style="background:#d6eafc;"><div style="width:${pMpPer}%; height:100%; background:linear-gradient(90deg, #74b9ff, #0984e3); transition:0.3s;"></div></div>
+                <div style="background:white; padding:10px; border-radius:10px; display:flex; flex-direction:column; gap:6px;">
+                    <div class="battle-stat-label" style="color:#c0392b;"><span>❤ 自身气血</span><span>${Math.floor(b.playerHp)} / ${b.playerMaxHp}</span></div>
+                    <div class="battle-bar-bg"><div style="width:${pHpPer}%; height:100%; background:#d63031;"></div></div>
                 </div>
-            </div>
-            
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; position:relative; z-index:1;">
-                <button class="btn-cheese-action" style="border-color:#dca842; background:linear-gradient(to bottom, #fff6cc, #fffde8);" onclick="game.openBattleSkillSelector()">✨ 施展神通</button>
-                <button class="btn-cheese-action" style="border-color:#b4e5a2;" onclick="game.doBattleAction('item')">💊 灵丹回血</button>
-                <button class="btn-cheese-action" style="border-color:#f5cbb7;" onclick="game.openPetCaptureUI()">🐾 唤宠掠阵</button>
-                <button class="btn-cheese-action" style="border-color:#cccccc; color:#7f8c8d;" onclick="closeModal(); if(typeof Utils !== 'undefined') Utils.toast('拱手作揖，点到为止。','info');">🏳️ 收招认输</button>
-            </div>
-        </div>
-        `;
-    } else {
-        html = `
-        <style>
-            .battle-stat-label { display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; font-weight:bold; }
-            .battle-bar-bg { width:100%; height:12px; background:#f0ebd5; border-radius:6px; overflow:hidden; border:1px solid rgba(212,172,13,0.15); }
-        </style>
-        <div class="battle-card-cheese" data-battle-type="pvp" style="font-family: '楷体', serif; background:#fefaf0; padding:15px; border-radius:15px;">
-            <div style="text-align:center; font-weight:bold; color:#7d6608; font-size:16px; margin-bottom:10px;">🥋 论道切磋：${npc.name}</div>
-            <div style="background: white; padding: 10px; border-radius: 10px; border: 1px solid #ebdcb0; margin-bottom:10px;">
-                <div class="battle-stat-label" style="color:#b22222;"><span>💀 对手真元</span><span>${Math.ceil(b.npcHp)} / ${b.npcMaxHp}</span></div>
-                <div class="battle-bar-bg"><div style="width:${npcHpPer}%; height:100%; background:#e74c3c;"></div></div>
-            </div>
-            <div id="duel-log-box" style="height:90px; overflow-y:auto; margin:10px 0; font-size:12px; background:#fff; padding:8px; border-radius:8px; border-left:3px solid #f1c40f;">
-                ${b.logs.map(l => `<div>🔸 ${l}</div>`).join('')}
-            </div>
-            <div style="background:white; padding:10px; border-radius:10px; display:flex; flex-direction:column; gap:6px;">
-                <div class="battle-stat-label" style="color:#c0392b;"><span>❤ 自身气血</span><span>${Math.floor(b.playerHp)} / ${b.playerMaxHp}</span></div>
-                <div class="battle-bar-bg"><div style="width:${pHpPer}%; height:100%; background:#d63031;"></div></div>
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
-                <button class="btn-cheese-action" onclick="game.openBattleSkillSelector()">✨ 施展神通</button>
-                <button class="btn-cheese-action" onclick="game.doBattleAction('item')">💊 灵丹回血</button>
-            </div>
-        </div>`;
-    }
-    openModal("论道切磋", html);
-    const dlb = document.getElementById('duel-log-box');
-    if (dlb) dlb.scrollTop = dlb.scrollHeight;
-},
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
+                    <button class="btn-cheese-action" onclick="game.openBattleSkillSelector()">✨ 施展神通</button>
+                    <button class="btn-cheese-action" onclick="game.doBattleAction('item')">💊 灵丹回血</button>
+                    <button class="btn-cheese-action" style="grid-column: span 2; border-color:#cccccc; color:#7f8c8d; margin-top:4px;" onclick="console.log('🏳️ [演武交互探针] 玩家主动认输，切入战败结算轨...'); if(typeof game !== 'undefined' && game.handleBattleDefeat){ game.handleBattleDefeat(); }">🏳️ 收招认输</button>
+                </div>
+            </div>`;
+        }
+        openModal("论道切磋", html);
+        const dlb = document.getElementById('duel-log-box');
+        if (dlb) dlb.scrollTop = dlb.scrollHeight;
+    },
 // 🌟 【完美嵌入】你提供的神通选择面板核心函数（已平滑融入类结构中，去window格式）
     openBattleSkillSelector: function() {
         const p = gameState.player;
@@ -30448,8 +30935,7 @@ renderNpcBattleUI: function(isVersusMode = true) {
             this.currentNpcBattle = null; // 清洗卸载战斗实例
         }, 1500);
     },
-
-    // 💀 【分离提取】独立玩家战败结算核心
+// 💀 【分离提取】独立玩家战败结算核心
     handleBattleDefeat: function() {
         const b = this.currentNpcBattle;
         const p = gameState.player;
@@ -30939,8 +31425,8 @@ acceptNPCHandshake: function(npcJsonStr) {
         }
         html += `</div>`;
 
-        // 4. 🌏 九州快讯
-        html += `<div class="palace-card"><div class="card-header"><div class="card-title font-title">🌏 九州快讯</div></div>`;
+        // 4. 🌏 九州快讯（缺乏灵感敬请期待）
+        html += `<div class="palace-card"><div class="card-header"><div class="card-title font-title">🌏 九州快讯（缺乏灵感敬请期待）</div></div>`;
         if (t.news && t.news.length > 0) {
             const recentNews = t.news.slice(-3).reverse();
             recentNews.forEach(n => {
